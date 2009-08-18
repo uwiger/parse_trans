@@ -1,6 +1,9 @@
+
+%% Display meta-data about a compiled class module.
 Info = fun(Class) -> io:fwrite("~s~n",[io_lib_pretty:print(Class:'#new-wooper_info'(),fun(wooper_info,6) -> Class:'#info-wooper_info'(fields); (_,_) -> no end)]) end.
 
-C = fun(F) -> {ok,Mod} = compile:file("../examples/" ++ atom_to_list(F) ++".erl",[{parse_transform,wooper_xform},report,debug_info]), c:l(Mod) end.
-
+%% Compile and load a class in the current working directory
 C = fun(F) -> {ok,Mod} = compile:file(atom_to_list(F) ++".erl",[{parse_transform,wooper_xform},report,debug_info]), c:l(Mod) end.
 
+%% Compile a class, and pretty-print the result to Class.xfm
+Cp = fun(F) -> {ok,Mod} = compile:file(atom_to_list(F) ++".erl",[{parse_transform,wooper_xform},report,debug_info, pt_pp_src]), c:l(Mod) end.
