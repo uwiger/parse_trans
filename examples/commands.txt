@@ -1,0 +1,6 @@
+Info = fun(Class) -> io:fwrite("~s~n",[io_lib_pretty:print(Class:'#new-wooper_info'(),fun(wooper_info,6) -> Class:'#info-wooper_info'(fields); (_,_) -> no end)]) end.
+
+C = fun(F) -> {ok,Mod} = compile:file("../examples/" ++ atom_to_list(F) ++".erl",[{parse_transform,wooper_xform},report,debug_info]), c:l(Mod) end.
+
+C = fun(F) -> {ok,Mod} = compile:file(atom_to_list(F) ++".erl",[{parse_transform,wooper_xform},report,debug_info]), c:l(Mod) end.
+
