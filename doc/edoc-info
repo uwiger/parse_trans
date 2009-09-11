@@ -1,0 +1,3 @@
+{application,lhttpc}.
+{packages,[]}.
+{modules,[parse_trans]}.

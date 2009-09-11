@@ -1,0 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Module parse_trans</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module parse_trans</h1>
+<ul class="index"><li><a href="#description">Description</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>Generic parse transform library for Erlang.
+
+<p><b>Authors:</b> : Ulf Wiger (<a href="mailto:ulf.wiger@erlang-consulting.com"><tt>ulf.wiger@erlang-consulting.com</tt></a>).</p>
+
+<h2><a name="description">Description</a></h2><p>Generic parse transform library for Erlang.</p>
+  
+   <p>...</p>
+  
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#context-2">context/2</a></td><td>
+   Accessor function for the Context record.</td></tr>
+<tr><td valign="top"><a href="#depth_first-4">depth_first/4</a></td><td></td></tr>
+<tr><td valign="top"><a href="#do_depth_first-4">do_depth_first/4</a></td><td></td></tr>
+<tr><td valign="top"><a href="#do_insert_forms-4">do_insert_forms/4</a></td><td></td></tr>
+<tr><td valign="top"><a href="#do_inspect-4">do_inspect/4</a></td><td></td></tr>
+<tr><td valign="top"><a href="#do_transform-4">do_transform/4</a></td><td></td></tr>
+<tr><td valign="top"><a href="#error-3">error/3</a></td><td>.</td></tr>
+<tr><td valign="top"><a href="#format_error-1">format_error/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#function_exists-3">function_exists/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#get_attribute-2">get_attribute/2</a></td><td>
+   Returns the value of the first occurence of attribute A.</td></tr>
+<tr><td valign="top"><a href="#get_file-1">get_file/1</a></td><td>
+   Returns the name of the file being compiled.</td></tr>
+<tr><td valign="top"><a href="#get_module-1">get_module/1</a></td><td>
+   Returns the name of the module being compiled.</td></tr>
+<tr><td valign="top"><a href="#get_orig_syntax_tree-1">get_orig_syntax_tree/1</a></td><td>.</td></tr>
+<tr><td valign="top"><a href="#get_pos-1">get_pos/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#initial_context-2">initial_context/2</a></td><td>
+   Initializes a context record.</td></tr>
+<tr><td valign="top"><a href="#inspect-4">inspect/4</a></td><td>
+   Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).</td></tr>
+<tr><td valign="top"><a href="#optionally_pretty_print-3">optionally_pretty_print/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#pp_src-2">pp_src/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#revert-1">revert/1</a></td><td>Reverts back from Syntax Tools format to Erlang forms.</td></tr>
+<tr><td valign="top"><a href="#transform-4">transform/4</a></td><td>
+   Makes one pass.</td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="context-2">context/2</a></h3>
+<div class="spec">
+<p><tt>context(X1::Attr, Context) -&gt; any()</tt>
+<ul class="definitions"><li><tt>Attr = module | function | arity | options</tt></li>
+</ul></p>
+</div><p>
+   Accessor function for the Context record.</p>
+
+<h3 class="function"><a name="depth_first-4">depth_first/4</a></h3>
+<div class="spec">
+<p><tt>depth_first(Fun, Acc, Forms, Options) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="do_depth_first-4">do_depth_first/4</a></h3>
+<div class="spec">
+<p><tt>do_depth_first(F, Acc, Forms, Context) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="do_insert_forms-4">do_insert_forms/4</a></h3>
+<div class="spec">
+<p><tt>do_insert_forms(X1, Insert, Forms, Context) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="do_inspect-4">do_inspect/4</a></h3>
+<div class="spec">
+<p><tt>do_inspect(F, Acc, Forms, Context) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="do_transform-4">do_transform/4</a></h3>
+<div class="spec">
+<p><tt>do_transform(F, Acc, Forms, Context) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="error-3">error/3</a></h3>
+<div class="spec">
+<p><tt>error(R::Reason, F::Form, I::Info) -&gt; <a href="#type-throw">throw()</a></tt>
+<ul class="definitions"><li><tt>Info = [{Key, Value}]</tt></li>
+</ul></p>
+</div><p>
+   <p>Used to report errors detected during the parse transform.</p></p>
+
+<h3 class="function"><a name="format_error-1">format_error/1</a></h3>
+<div class="spec">
+<p><tt>format_error(X1) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="function_exists-3">function_exists/3</a></h3>
+<div class="spec">
+<p><tt>function_exists(Fname, Arity, Forms) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="get_attribute-2">get_attribute/2</a></h3>
+<div class="spec">
+<p><tt>get_attribute(A, Forms) -&gt; any()</tt>
+<ul class="definitions"><li><tt>A = atom()</tt></li>
+</ul></p>
+</div><p>
+   Returns the value of the first occurence of attribute A.</p>
+
+<h3 class="function"><a name="get_file-1">get_file/1</a></h3>
+<div class="spec">
+<p><tt>get_file(Forms) -&gt; string()</tt></p>
+</div><p>
+   Returns the name of the file being compiled.</p>
+
+<h3 class="function"><a name="get_module-1">get_module/1</a></h3>
+<div class="spec">
+<p><tt>get_module(Forms) -&gt; atom()</tt></p>
+</div><p>
+   Returns the name of the module being compiled.</p>
+
+<h3 class="function"><a name="get_orig_syntax_tree-1">get_orig_syntax_tree/1</a></h3>
+<div class="spec">
+<p><tt>get_orig_syntax_tree(File) -&gt; Forms</tt></p>
+</div><p>
+   <p>Fetches a Syntax Tree representing the code before pre-processing,
+   that is, including record and macro definitions. Note that macro
+   definitions must be syntactically complete forms (this function
+   uses epp_dodger).</p></p>
+
+<h3 class="function"><a name="get_pos-1">get_pos/1</a></h3>
+<div class="spec">
+<p><tt>get_pos(I) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="initial_context-2">initial_context/2</a></h3>
+<div class="spec">
+<p><tt>initial_context(Forms, Options) -&gt; #context{}</tt></p>
+</div><p>
+   Initializes a context record. When traversing through the form
+   list, the context is updated to reflect the current function and
+   arity. Static elements in the context are the file name, the module
+   name and the options passed to the transform function.</p>
+
+<h3 class="function"><a name="inspect-4">inspect/4</a></h3>
+<div class="spec">
+<p><tt>inspect(F::Fun, Acc::Forms, Forms::Acc, Options) -&gt; NewAcc</tt>
+<ul class="definitions"><li><tt>Fun = function()</tt></li>
+</ul></p>
+</div><p>
+   Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).</p>
+
+<h3 class="function"><a name="optionally_pretty_print-3">optionally_pretty_print/3</a></h3>
+<div class="spec">
+<p><tt>optionally_pretty_print(Result, Options, Context) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="pp_src-2">pp_src/2</a></h3>
+<div class="spec">
+<p><tt>pp_src(Res, F) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="revert-1">revert/1</a></h3>
+<div class="spec">
+<p><tt>revert(Tree) -&gt; Forms</tt></p>
+</div><p>Reverts back from Syntax Tools format to Erlang forms.
+   <p>Note that the Erlang forms are a subset of the Syntax Tools
+   syntax tree, so this function is safe to call even on a list of
+   regular Erlang forms.</p></p>
+
+<h3 class="function"><a name="transform-4">transform/4</a></h3>
+<div class="spec">
+<p><tt>transform(Fun, Acc, Forms, Options) -&gt; {TransformedForms, NewAcc}</tt>
+<ul class="definitions"><li><tt>Fun = function()</tt></li>
+<li><tt>Options = [{Key, Value}]</tt></li>
+</ul></p>
+</div><p>
+   Makes one pass</p>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, Sep 11 2009, 05:25:22.</i></p>
+</body>
+</html>
