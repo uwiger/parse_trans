@@ -36,6 +36,7 @@
 -export([
          inspect/4,
 	 transform/4,
+         depth_first/4,
          revert/1
         ]).
 
@@ -47,7 +48,8 @@
 -export([
          initial_context/2,
          do_inspect/4,
-         do_transform/4
+         do_transform/4,
+         do_depth_first/4
         ]).
 
 -export([do_insert_forms/4]).
@@ -89,7 +91,16 @@
             throw({error,get_pos(I),{unknown,R}})
         end).
 
-
+%% Typer typedefs
+-type form()    :: any().
+-type forms()   :: [form()].
+-type options() :: [{atom(), any()}].
+-type type()    :: atom().
+-type xform_f() :: fun((type(), form(), #context{}, Acc) ->
+                              {form(), bool(), Acc}
+                                  | {forms(), form(), forms(), bool(), Acc}).
+-type insp_f()  :: fun((type(), form(), #context{}, A) -> {bool(), A}).
+                              
 
 %%% @spec (Reason, Form, Info) -> throw()
 %%% Info = [{Key,Value}]
@@ -98,11 +109,15 @@
 %%% <p>Used to report errors detected during the parse transform.</p>
 %%% @end
 %%%
+-spec error(string(), any(), [{any(),any()}]) ->
+    none().
 error(R, F, I) ->
     rpt_error(R, F, I),
     throw({error,get_pos(I),{unknown,R}}).
 
 
+-spec get_pos(list()) ->
+    integer().
 get_pos(I) when is_list(I) ->
     case proplists:get_value(form, I) of
 	undefined ->
@@ -117,6 +132,8 @@ get_pos(I) when is_list(I) ->
 %%% Returns the name of the file being compiled.
 %%% @end
 %%%
+-spec get_file(forms()) ->
+    string().
 get_file(Forms) ->
     string_value(hd(get_attribute(file, Forms))).
 
@@ -127,6 +144,8 @@ get_file(Forms) ->
 %%% Returns the name of the module being compiled.
 %%% @end
 %%%
+-spec get_module([any()]) ->
+    atom().
 get_module(Forms) ->
     atom_value(hd(get_attribute(module, Forms))).
 
@@ -139,18 +158,29 @@ get_module(Forms) ->
 %%% Returns the value of the first occurence of attribute A.
 %%% @end
 %%%
-get_attribute(A, [F|Forms]) ->
+-spec get_attribute(atom(), [any()]) ->
+    false | list().
+get_attribute(A, Forms) ->
+    case find_attribute(A, Forms) of
+        false ->
+            throw({error, ?DUMMY_LINE, {missing_attribute, A}});
+        Other ->
+            Other
+    end.
+
+find_attribute(A, [F|Forms]) ->
     case type(F) == attribute
         andalso atom_value(attribute_name(F)) == A of
         true ->
             attribute_arguments(F);
         false ->
-            get_attribute(A, Forms)
+            find_attribute(A, Forms)
     end;
-get_attribute(A, []) ->
-    throw({error, ?DUMMY_LINE, {missing_attribute, A}}).
+find_attribute(_, []) ->
+    false.
 
-
+-spec function_exists(atom(), integer(), forms()) ->
+    bool().
 function_exists(Fname, Arity, Forms) ->
     Fns = proplists:get_value(
             functions, erl_syntax_lib:analyze_forms(Forms), []),
@@ -166,6 +196,8 @@ function_exists(Fname, Arity, Forms) ->
 %%% name and the options passed to the transform function.
 %%% @end
 %%%
+-spec initial_context(forms(), options()) ->
+    #context{}.
 initial_context(Forms, Options) ->
     File = get_file(Forms),
     io:fwrite("File = ~p~n", [File]),
@@ -182,11 +214,22 @@ initial_context(Forms, Options) ->
 %%% @doc
 %%% Makes one pass
 %%% @end
-transform(Fun, Acc, Forms, Options) when is_function(Fun, 5) ->
+-spec transform(xform_f(), Acc, forms(), options()) ->
+    {forms(), Acc} | {error, list()}.
+transform(Fun, Acc, Forms, Options) when is_function(Fun, 4) ->
+    do(fun do_transform/4, Fun, Acc, Forms, Options).
+
+-spec depth_first(xform_f(), Acc, forms(), options()) ->
+    {forms(), Acc} | {error, list()}.
+depth_first(Fun, Acc, Forms, Options) when is_function(Fun, 4) ->
+    do(fun do_depth_first/4, Fun, Acc, Forms, Options).
+
+
+do(Transform, Fun, Acc, Forms, Options) ->
     Context = initial_context(Forms, Options),
     File = Context#context.file,
-    try do_transform(Fun, Acc, Forms, Context) of
-	{_, NewForms} = Result ->
+    try Transform(Fun, Acc, Forms, Context) of
+	{NewForms, _} = Result ->
             optionally_pretty_print(NewForms, Options, Context),
             Result
     catch
@@ -198,7 +241,8 @@ transform(Fun, Acc, Forms, Options) when is_function(Fun, 5) ->
 	    {error, [{File, [{Ln, ?MODULE, What}]}], []}
     end.
 
-
+-spec do_insert_forms(above | below, forms(), forms(), #context{}) ->
+    forms().
 do_insert_forms(above, Insert, Forms, Context) when is_list(Insert) ->
     {NewForms, _} =
         do_transform(
@@ -208,11 +252,11 @@ do_insert_forms(above, Insert, Forms, Context) when is_list(Insert) ->
                   {F, _Recurse = false, Acc}
           end, false, Forms, Context),
     NewForms;
-do_insert_forms(below, Insert, Forms, Context) when is_list(Insert) ->
+do_insert_forms(below, Insert, Forms, _Context) when is_list(Insert) ->
     insert_below(Forms, Insert).
 
 
-insert_below([F|Rest] = Forms, Insert) ->
+insert_below([F|Rest], Insert) ->
     case type(F) of
         eof_marker ->
             Insert ++ [F];
@@ -220,15 +264,28 @@ insert_below([F|Rest] = Forms, Insert) ->
             [F|insert_below(Rest, Insert)]
     end.
 
+-spec optionally_pretty_print(forms(), options(), #context{}) ->
+    ok.
 optionally_pretty_print(Result, Options, Context) ->
-    case lists:member(pt_pp_src, Options) of
-        true ->
+    DoPP =
+    case proplists:get_value(pt_pp_src, Options) of
+        undefined ->
+            case find_attribute(pt_pp_src,Result) of
+                [Expr] ->
+                    type(Expr) == atom andalso
+                        atom_value(Expr) == true;
+                _ ->
+                    false
+            end;
+        V when is_boolean(V) ->
+            V
+    end,
+    if DoPP ->
             File = Context#context.file,
             Out = outfile(File),
             pp_src(Result, Out),
             io:fwrite("Pretty-printed in ~p~n", [Out]);
-        _ ->
-            io:fwrite("Will not pretty-print~n", []),
+       true ->
             ok
     end.
 
@@ -239,6 +296,8 @@ optionally_pretty_print(Result, Options, Context) ->
 %%% Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).
 %%% @end
 %%%
+-spec inspect(insp_f(), A, forms(), options()) ->
+    A.
 inspect(F, Acc, Forms, Options) ->
     Context = initial_context(Forms, Options),
     do_inspect(F, Acc, Forms, Context).
@@ -312,7 +371,7 @@ do_inspect(F, Acc, Forms, Context) ->
                 Type = type(Form),
                 {Recurse, Acc1} = apply_F(F, Type, Form, Context, Acc0),
                 if_recurse(
-                  Recurse, Form, Acc1,
+                  Recurse, Form, _Else = Acc1,
                   fun(ListOfLists) ->
                           lists:foldl(
                             fun(L, AccX) ->
@@ -324,37 +383,80 @@ do_inspect(F, Acc, Forms, Context) ->
         end,
     lists:foldl(F1, Forms, Acc).
 
+if_recurse(true, Form, Else, F) -> recurse(Form, Else, F);
+if_recurse(false, _, Else, _)   -> Else.
+
+recurse(Form, Else, F) ->
+    case erl_syntax:subtrees(Form) of
+        [] ->
+            Else;
+        [_|_] = ListOfLists ->
+            F(ListOfLists)
+    end.
+
 
 do_transform(F, Acc, Forms, Context) ->
+    Rec = fun do_transform/4, % this function
     F1 =
 	fun(Form, Acc0) ->
-		Type = type(Form),
 		{Before1, Form1, After1, Recurse, Acc1} =
-                    case apply_F(F, Type, Form, Context, Acc0) of
-			{Form1x, Rec1x, A1x} ->
-			    {[], Form1x, [], Rec1x, A1x};
-			{_Be1, _F1, _Af1, _Rec1, _Ac1} = Res1 ->
-			    Res1
-		    end,
-                if_recurse(
-                  Recurse, Form,
-                  {Before1, Form1, After1, Acc1},
-                  fun(ListOfLists) ->
-                          {NewListOfLists, NewAcc} =
-                              mapfoldl(
-                                fun(L, AccX) ->
-                                        do_transform(
-                                          F, AccX, L,
-                                          update_context(
-                                            Form1, Context))
-                                end, Acc1, ListOfLists),
-                          NewForm =
-                              erl_syntax:update_tree(
-                                Form, NewListOfLists),
-                          {Before1, NewForm, After1, NewAcc}
-                  end)
+                    this_form_rec(F, Form, Context, Acc0),
+                if Recurse ->
+                        {NewForm, NewAcc} =
+                            enter_subtrees(Form1, F, Context, Acc1, Rec),
+                        {Before1, NewForm, After1, NewAcc};
+                   true ->
+                        {Before1, Form1, After1, Acc1}
+                end
 	end,
     mapfoldl(F1, Acc, Forms).
+
+do_depth_first(F, Acc, Forms, Context) ->
+    Rec = fun do_depth_first/4,  % this function
+    F1 =
+        fun(Form, Acc0) ->
+                {NewForm, NewAcc} = enter_subtrees(Form, F, Context, Acc, Rec),
+                this_form_df(F, NewForm, Context, NewAcc)
+        end,
+    mapfoldl(F1, Acc, Forms).
+    
+
+enter_subtrees(Form, F, Context, Acc, Recurse) ->
+    case erl_syntax:subtrees(Form) of
+        [] ->
+            {Form, Acc};
+        [_|_] = ListOfLists ->
+            {NewListOfLists, NewAcc} =
+                mapfoldl(
+                  fun(L, AccX) ->
+                          Recurse(F, AccX, L, Context)
+                  end, Acc, ListOfLists),
+            NewForm =
+                erl_syntax:update_tree(
+                  Form, NewListOfLists),
+            {NewForm, NewAcc}
+    end.
+
+
+this_form_rec(F, Form, Context, Acc) ->
+    Type = type(Form),
+    case apply_F(F, Type, Form, Context, Acc) of
+        {Form1x, Rec1x, A1x} ->
+            {[], Form1x, [], Rec1x, A1x};
+        {_Be1, _F1, _Af1, _Rec1, _Ac1} = Res1 ->
+            Res1
+    end.
+this_form_df(F, Form, Context, Acc) ->
+    Type = type(Form),
+    case apply_F(F, Type, Form, Context, Acc) of
+        {Form1x, A1x} ->
+            {[], Form1x, [], A1x};
+        {_Be1, _F1, _Af1, _Ac1} = Res1 ->
+            Res1
+    end.
+    
+                                               
+                
 
 apply_F(F, Type, Form, Context, Acc) ->
     try F(Type, Form, Context, Acc)
@@ -365,19 +467,9 @@ apply_F(F, Type, Form, Context, Acc) ->
                    [{type, Type},
                     {context, Context},
                     {acc, Acc},
+                    {apply_f, F},
                     {form, Form}])
     end.
-
-if_recurse(true, Form, Else, F) ->
-    case erl_syntax:subtrees(Form) of
-        [] ->
-            Else;
-        [_|_] = ListOfLists ->
-            F(ListOfLists)
-    end;
-if_recurse(false, _, Else, _) ->
-    Else.
-
 
 
 update_context(Form, Context0) ->

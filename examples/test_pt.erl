@@ -1,10 +1,8 @@
 -module(test_pt).
 
 -export([parse_transform/2]).
--compile(export_all).
 
-
-parse_transform(Forms, Options) ->
+parse_transform(Forms, _Options) ->
     io:fwrite("Forms = ~p~n", [Forms]),
     Forms.
 
