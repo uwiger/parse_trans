@@ -30,7 +30,7 @@
 
 edoc() ->
     try
-        edoc:application(lhttpc, "./", [{doc, "doc/"}])
+        edoc:application(?THIS_APP, "./", [{doc, "doc/"}])
     catch _:_ ->
         halt(1)
     end,

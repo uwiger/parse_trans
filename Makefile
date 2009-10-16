@@ -16,6 +16,9 @@ TEST_BEAMS := $(patsubst %.erl,%.beam, $(TEST_SOURCES))
 EXAMPLE_SOURCES := $(wildcard examples/*.erl)
 EXAMPLE_BEAMS := $(patsubst %.erl,%.beam, $(EXAMPLE_SOURCES))
 
+UTIL_SOURCES := $(wildcard util/*.erl)
+UTIL_BEAMS := $(patsubst %.erl,%.beam, $(UTIL_SOURCES))
+
 include vsn.mk
 
 .PHONY: all clean dialyzer
@@ -50,7 +53,7 @@ ebin:
 	@echo Creating ebin/
 	@mkdir ebin/
 
-doc: doc/edoc-info
+doc: doc/edoc-info util
 
 dialyzer: util/my_plt.plt
 	@echo Running dialyzer on sources
@@ -61,9 +64,10 @@ doc/edoc-info: doc/overview.edoc $(SOURCES)
 	@echo Generating documentation from edoc
 	@erl -pa util/ -noinput -s make_doc edoc
 
+util: $(UTIL_BEAMS)
 
 util/%.beam: util/%.erl
-	@erlc -o util/ $<
+	@erlc -o util/ -DTHIS_APP=$(APPLICATION) $<
 
 util/my_plt.plt: util/make_plt.beam
 	@erl -noinput -pa util -eval 'make_plt:add([syntax_tools],"util/my_plt.plt")'

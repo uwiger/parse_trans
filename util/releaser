@@ -24,7 +24,7 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ----------------------------------------------------------------------------
-# Script for making a release of lhttpc. Or any program in hg really. Check
+# Script for making a release of this app. Or any program in hg really. Check
 # the Makefile target release for how to use it.
 
 NAME=$1

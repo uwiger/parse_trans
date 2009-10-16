@@ -36,6 +36,7 @@
 -define(FILE_NAME(MODULE),
     "cover_report/" ++ atom_to_list(MODULE) ++ ".html").
 
+
 run() ->
     Modules = get_modules(),
     ok = cover_compile(Modules),
@@ -77,7 +78,7 @@ write_report(Modules) ->
         [
             "<html>\n<head><title>Cover report index</title></head>\n"
             "<body>\n"
-            "<h1>Cover report for lhttpc</h1>"
+            "<h1>Cover report for ", atom_to_list(?THIS_APP), "</h1>"
             "Total coverage: ", integer_to_list(TotalPercentage), "%"
             "<h2>Cover for individual modules</h2>\n"
             "<ul>\n\t",
@@ -107,8 +108,8 @@ percentage([], Covered, Lines, Percentages) ->
     {(Covered * 100) div Lines, Percentages}.
 
 get_modules() ->
-    application:load(lhttpc),
-    {ok, Modules} = application:get_key(lhttpc, modules),
+    application:load(?THIS_APP),
+    {ok, Modules} = application:get_key(?THIS_APP, modules),
     Modules.
 
 cover_compile([Module | Modules]) ->
@@ -119,4 +120,4 @@ cover_compile([]) ->
 
 %%% Eunit functions
 application_test_() ->
-    {application, lhttpc}.
+    {application, ?THIS_APP}.
