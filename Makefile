@@ -23,9 +23,9 @@ include vsn.mk
 
 .PHONY: all clean dialyzer
 
-all: $(APPLICATION) doc
+all: $(APPLICATION) doc util
 
-$(APPLICATION): $(BEAMS) $(APP_FILE)
+$(APPLICATION): $(BEAMS) $(APP_FILE) $(UTIL_BEAMS)
 
 test: $(APPLICATION) $(TEST_BEAMS) util/run_test.beam
 	@echo Running tests
@@ -59,8 +59,11 @@ dialyzer: util/my_plt.plt
 	@echo Running dialyzer on sources
 	@dialyzer --src -r src/ --plt util/my_plt.plt
 
-doc/edoc-info: doc/overview.edoc $(SOURCES) 
-	@erlc -o util/ util/make_doc.erl
+#doc/edoc-info: doc/overview.edoc util $(SOURCES) 
+#	@erlc -o util/ util/make_doc.erl
+#	@echo Generating documentation from edoc
+#	@erl -pa util/ -noinput -s make_doc edoc
+doc/edoc-info: doc/overview.edoc util $(SOURCES) 
 	@echo Generating documentation from edoc
 	@erl -pa util/ -noinput -s make_doc edoc
 
