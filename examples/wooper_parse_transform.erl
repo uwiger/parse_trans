@@ -127,6 +127,7 @@ parse_transform(Forms0, Options) ->
 		      ConstructExport ++
 		      info(member_methods,WInfo) ++
 		      info(static_methods,WInfo) ++
+		      [B || B <- wooper_bifs(), lists:member(B, Functions)] ++
 		      [M || {M,_} <- MethodsToAdd]),
 	MethodExport = exports(AllExports, Forms),
 	Add = fun(Where, What, Fs) ->
@@ -191,6 +192,7 @@ rewrite_funs(Forms, Ctxt) ->
 rewrite_f(F, Arity, Args, Form) ->
     case lists:member({F,Arity}, wooper_bifs()) of
 	true ->
+	    io:fwrite("rewriting 'bif' ~p/~p~n", [F, Arity]),
 	    application(atom(wooper), atom(F), Args);
 	false ->
 	    Form
@@ -200,7 +202,10 @@ wooper_bifs() ->
     [{setAttribute, 3},
      {setAttributes, 2},
      {getAttribute, 2},
+     {executeOneway, 2},
      {executeOneway, 3},
+     {executeOnewayWith, 3},
+     {executeOnewayWith, 4},
      {executeRequest, 3}].
 
 % old_stuff(Forms, Options) ->
@@ -284,7 +289,8 @@ wooper_info(Attrs, Ctxt) ->
     StaticExports = proplists:get_value(wooper_static_methods,Attrs,[]),
     Class = parse_trans:context(module, Ctxt),
     InheritedAttrs = inherited_attributes(SuperClasses),
-    ClassAttributes = attr_names(LocalClassAttrs) ++ attr_names(InheritedAttrs),
+    ClassAttributes = (attr_names(LocalClassAttrs) ++
+		       attr_names([A || {A,_} <- InheritedAttrs])),
     io:fwrite("InheritedAttrs = ~p~n", [InheritedAttrs]),
     [{class, Class},
      {superclasses,SuperClasses},
@@ -379,6 +385,7 @@ methods_to_add(WInfo, Functions) ->
 
 functions(Forms) ->
     FormInfo = erl_syntax_lib:analyze_forms(Forms),
+    io:fwrite("FormInfo = ~p~n", [FormInfo]),
     proplists:get_value(functions, FormInfo).
 
 
