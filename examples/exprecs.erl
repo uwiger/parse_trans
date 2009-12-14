@@ -156,6 +156,7 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
     Exports = [{fname(new), 1},
 	       {fname(info), 1},
 	       {fname(info), 2},
+	       {fname(isrec), 2},
 	       {fname(get), 2},
 	       {fname(set), 2},
 	       {fname(fromlist), 2} |
@@ -263,6 +264,7 @@ generate_accessors(L, Acc) ->
     [f_new_(Acc, L),
      f_info(Acc, L),
      f_info_2(Acc, L),
+     f_isrec(Acc, L),
      f_get(Acc, L),
      f_set(Acc, L),
      f_fromlist(Acc, L) |
@@ -294,6 +296,7 @@ fname_prefix(Op) ->
 	set -> "#set-";
 	fromlist -> "#fromlist-";
 	info -> "#info-";
+	isrec -> "#is_record-";
         convert -> "#convert-"
     end.
 
@@ -433,6 +436,27 @@ f_info(_Acc, L) ->
        [{var, L, 'RecName'}], [],
        [{call, L, {atom, L, Fname}, [{var, L, 'RecName'}, {atom, L, fields}]}]
       }]}.
+
+f_isrec(Acc, L) ->
+    Fname = list_to_atom(fname_prefix(isrec)),
+    Info = [{R,length(As)} || {R,As} <- Acc#pass1.records],
+    {function, L, Fname, 2,
+     lists:map(
+       fun({R, Ln}) ->
+	       {clause, L,
+		[{atom, L, R}, {var, L, 'Rec'}],
+		[[{op,L,'==',
+		   {call, L, {atom,L,tuple_size},[{var,L,'Rec'}]},
+		   {integer, L, Ln}},
+		  {op,L,'==',
+		   {call,L,{atom,L,element},[{integer,L,1},
+					     {var,L,'Rec'}]},
+		   {atom, L, R}}]],
+		[{atom, L, true}]}
+       end, Info) ++
+     [{clause, L, [{var,L,'_'}, {var,L,'_'}], [],
+       [{atom, L, false}]}]}.
+
 %%%    {function, L, Fname, 1,
 %%%     [{clause, L,
 %%%       [{var, L, 'Rec'}],

@@ -119,10 +119,6 @@ parse_transform(Forms, Options) ->
 	Methods = generate_methods(MethodsToAdd),
 	MethodExport = exports(info(member_methods,WInfo), Forms),
 	StaticExport = exports(info(static_methods,WInfo), Forms),
-	% MethodExport = {attribute,1,export,
-	% 		[M || M <- info(member_methods, WInfo)]},
-	% StaticExport = {attribute,1,export,
-	% 		[M || M <- info(static_methods, WInfo)]},
 	Add = fun(Where, What, Fs) ->
 		      parse_trans:do_insert_forms(Where, What, Fs, Ctxt)
 	      end,
@@ -131,6 +127,7 @@ parse_transform(Forms, Options) ->
 					     Add(below, Methods,
 						 rewrite_funs(Forms,Ctxt))),
 					 [{exprecs_strict, false}|Options]),
+	% right now, the option to pretty-print is hard-coded...
 	parse_trans:optionally_pretty_print(
 	  Result, [{pt_pp_src,true},{pt_log_forms,true}|Options], Ctxt),
 	Result
