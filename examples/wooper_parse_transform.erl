@@ -95,10 +95,11 @@
 
 -import(erl_syntax, [atom/1, application/3]).
 
-parse_transform(Forms, Options) ->
+parse_transform(Forms0, Options) ->
     %%
     %% get macros using epp_dodger
     %%
+    Forms = restructure(Forms0),
     Ctxt = parse_trans:initial_context(Forms, Options),
     File = parse_trans:context(file, Ctxt),
     try
@@ -114,18 +115,28 @@ parse_transform(Forms, Options) ->
          {attribute, 1, record, WRec},
          {attribute, 1, record, SRec}],
 	io:fwrite("Above = ~p~n", [Above]),
-	MethodsToAdd = methods_to_add(WInfo, Forms),
+	Functions = functions(Forms),
+	MethodsToAdd = methods_to_add(WInfo, Functions),
 	io:fwrite("MethodsToAdd = ~p~n", [MethodsToAdd]),
+	{NewExports, NewForms} = generate_new(WInfo, Functions),
 	Methods = generate_methods(MethodsToAdd),
-	MethodExport = exports(info(member_methods,WInfo), Forms),
-	StaticExport = exports(info(static_methods,WInfo), Forms),
+	ConstructExport = [{construct,
+			    length(
+			      proplists:get_value(attributes, WInfo))+1}],
+	AllExports = (NewExports ++
+		      ConstructExport ++
+		      info(member_methods,WInfo) ++
+		      info(static_methods,WInfo) ++
+		      [M || {M,_} <- MethodsToAdd]),
+	MethodExport = exports(AllExports, Forms),
 	Add = fun(Where, What, Fs) ->
 		      parse_trans:do_insert_forms(Where, What, Fs, Ctxt)
 	      end,
-	Result = exprecs:parse_transform(Add(above, [MethodExport,
-						     StaticExport|Above],
-					     Add(below, Methods,
-						 rewrite_funs(Forms,Ctxt))),
+	Result = exprecs:parse_transform(Add(above, [MethodExport|Above],
+					     Add(below, NewForms,
+						 Add(below, Methods,
+						     rewrite_funs(
+						       Forms,Ctxt)))),
 					 [{exprecs_strict, false}|Options]),
 	% right now, the option to pretty-print is hard-coded...
 	parse_trans:optionally_pretty_print(
@@ -135,6 +146,15 @@ parse_transform(Forms, Options) ->
 	throw:{?MODULE, {Ln,R,I}} ->
 	    {error, [{File, [{Ln, ?MODULE, {R, I}}]}], []}
     end.
+
+%% a quick-and-dirty way to ensure that attributes and exports appear before
+%% all function definitions
+restructure(Forms) ->
+    Attrs = [A || {attribute,_,_,_} = A <- Forms],
+    NonAttrs = [F || F <- Forms,
+		     element(1, F) =/= attribute],
+    Attrs ++ NonAttrs.
+		  
 
 
 exports(Es, Forms) ->
@@ -351,12 +371,51 @@ inherited_methods(Local, SuperClasses) ->
               end
       end, [], SuperClasses).
 
-methods_to_add(Info, Forms) ->
-    FormInfo = erl_syntax_lib:analyze_forms(Forms),
-    Functions = proplists:get_value(functions, FormInfo),
-    Methods = proplists:get_value(inherited_methods, Info),
+methods_to_add(WInfo, Functions) ->
+    Methods = proplists:get_value(inherited_methods, WInfo),
     [{M,C} || {M,C} <- Methods,
-              not lists:member(M, Functions)].
+              not lists:member(M, Functions)] ++
+	wooper_builtins(Functions).
+
+functions(Forms) ->
+    FormInfo = erl_syntax_lib:analyze_forms(Forms),
+    proplists:get_value(functions, FormInfo).
+
+
+generate_new(WInfo, Functions) ->
+    Funs = [new, new_link,
+	    synchronous_new,
+	    synchronous_new_link,
+	    synchronous_timed_new,
+	    synchronous_timed_new_link],
+    L = [generate_new(Fname, WInfo, Functions) || Fname <- Funs],
+    {Exports, Forms} = lists:unzip(L),
+    {Exports, lists:concat(Forms)}.
+	    
+generate_new(Fname, WInfo, Functions) ->
+    case lists:keyfind(Fname, 1, Functions) of
+	false ->
+	    Arity = length(proplists:get_value(attributes, WInfo, [])),
+	    Class = proplists:get_value(class, WInfo),
+	    L = 999,
+	    Vars = vars(Arity, L),
+	    Form = [{function, L, Fname, Arity,
+		     [{clause, L, [V || V <- Vars], [],
+		       [{call, L, {remote, L,
+				   {atom,L,wooper},{atom,L,Fname}},
+			 [{atom,L,Class}, mk_cons(Vars, L)]}]}]}],
+	    {{Fname,Arity}, Form};
+	Other ->
+	    {Other, []}
+    end.
+
+mk_cons([], L) ->
+    {nil,L};
+mk_cons([H|T], L) ->
+    {cons, L, H, mk_cons(T, L)}.
+
+wooper_builtins(_Functions) ->
+    [].
 
 generate_methods(Methods) ->
     [abstract_method(F, A, C) || {{F,A}, C} <- Methods].
@@ -364,13 +423,14 @@ generate_methods(Methods) ->
 
 abstract_method(Fname, Arity, Class) ->
     L = 999,
-    Vars = [{var, L, list_to_atom("V" ++ integer_to_list(N))} ||
-               N <- lists:seq(1,Arity)],
+    Vars = vars(Arity, L),
     {function, 999, Fname, Arity,
      [{clause, L, [V || V <- Vars], [],
        [{call, L, {remote, L, {atom, L, Class}, {atom, L, Fname}}, Vars}]}]}.
     
-                                     
+vars(Arity, L) ->
+    [{var, L, list_to_atom("V" ++ integer_to_list(N))} ||
+	N <- lists:seq(1,Arity)].
 
 % from_camel(P) ->
 %     [H|T] = atom_to_list(P),
