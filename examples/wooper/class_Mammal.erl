@@ -9,7 +9,13 @@
 
 
 -module(class_Mammal).
+-include("wooper_class.hrl").
 
+
+-wooper_superclasses([class_Creature]).
+-wooper_attributes([fur_color]).
+-wooper_member_methods([setAge/2, isHotBlooded/1, getFurColor/1,
+			getArbitraryNumber/1, testExplicitClassSelection/1]).
 
 % Determines what are the mother classes of this class (if any):
 -define(wooper_superclasses,[class_Creature]).
@@ -32,7 +38,7 @@
 
 % Declarations of class-specific methods (besides inherited ones).
 -define(wooper_method_export, setAge/2, isHotBlooded/1, getFurColor/1,
-	getArbitraryNumber/1 ).
+	getArbitraryNumber/1, testExplicitClassSelection/1 ).
 
 
 
@@ -41,9 +47,9 @@
 
 
 % Constructs a new Mammal.
-construct(State,?wooper_construct_parameters) ->
-	CreatureState = class_Creature:construct(State,Age,Gender),
-	?setAttribute(CreatureState,fur_color,FurColor).
+construct( State, ?wooper_construct_parameters ) ->
+	CreatureState = class_Creature:construct( State, Age, Gender ),
+	setAttribute(CreatureState,fur_color,FurColor).
 	
 	
 % Overriding default destructor:	
@@ -54,6 +60,7 @@ delete(State) ->
 	State.
 	
 	
+	
 % Method implementations.
 
 
@@ -62,7 +69,7 @@ delete(State) ->
 % Overridden from Creature, useful to show the use of executeOneway.
 % (oneway)
 setAge(State,NewAge) ->
-	?wooper_return_state_only(?setAttribute(State,age,NewAge)).
+	?wooper_return_state_only( setAttribute(State,age,NewAge) ).
 
 
 % All mammals are hot-blooded:
@@ -74,7 +81,7 @@ isHotBlooded(State) ->
 % Attribute names could be defined in '-define().' header (.hrl) clauses,
 % to ensure consistency.
 getFurColor(State) ->
-	?wooper_return_state_result( State, ?getAttribute(State,fur_color) ).
+	?wooper_return_state_result( State, getAttribute(State,fur_color) ).
 	
 	
 % Returns a class-specific arbitrary number.
@@ -85,3 +92,15 @@ getArbitraryNumber(State) ->
 	%throw( exception_throw_test_from_request ),
 	?wooper_return_state_result(State,15).
 
+
+% Allows to test that we can indeed call any version of the implementation of
+% a method, not only the latest overridden one.
+% (oneway)
+testExplicitClassSelection(State) ->
+	% Using just executeOneway( State, setAge, 20 ) would call the class_Mammal 
+	% version, we call the class_Creature version instead, which sets the
+	% age to 36 regardless of the specified one:
+	NewState = executeOnewayWith( State, class_Creature, setAge, 20 ),
+	36 = getAttribute( NewState, age ),
+	?wooper_return_state_only( NewState ).
+	 
