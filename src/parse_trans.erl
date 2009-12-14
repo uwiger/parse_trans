@@ -49,7 +49,8 @@
          initial_context/2,
          do_inspect/4,
          do_transform/4,
-         do_depth_first/4
+         do_depth_first/4,
+	 top/3
         ]).
 
 -export([do_insert_forms/4]).
@@ -224,14 +225,31 @@ transform(Fun, Acc, Forms, Options) when is_function(Fun, 4) ->
 depth_first(Fun, Acc, Forms, Options) when is_function(Fun, 4) ->
     do(fun do_depth_first/4, Fun, Acc, Forms, Options).
 
-
 do(Transform, Fun, Acc, Forms, Options) ->
     Context = initial_context(Forms, Options),
     File = Context#context.file,
     try Transform(Fun, Acc, Forms, Context) of
-	{NewForms, _} = Result ->
+	{NewForms, _} = Result when is_list(NewForms) ->
             optionally_pretty_print(NewForms, Options, Context),
             Result
+    catch
+        error:Reason ->
+            {error,
+             [{File, [{?DUMMY_LINE, ?MODULE,
+                       {Reason, erlang:get_stacktrace()}}]}]};
+	throw:{error, Ln, What} ->
+	    {error, [{File, [{Ln, ?MODULE, What}]}], []}
+    end.
+
+
+top(F, Forms, Options) ->
+    Context = initial_context(Forms, Options),
+    File = Context#context.file,
+    try F(Forms, Context) of
+	{error, Reason} -> {error, Reason};
+	NewForms when is_list(NewForms) ->
+            optionally_pretty_print(NewForms, Options, Context),
+	    NewForms
     catch
         error:Reason ->
             {error,
@@ -267,10 +285,29 @@ insert_below([F|Rest], Insert) ->
 -spec optionally_pretty_print(forms(), options(), #context{}) ->
     ok.
 optionally_pretty_print(Result, Options, Context) ->
-    DoPP =
-    case proplists:get_value(pt_pp_src, Options) of
+    DoPP = option_value(pt_pp_src, Options, Result),
+    DoLFs = option_value(pt_log_forms, Options, Result),
+    File = Context#context.file,
+    if DoLFs ->
+	    Out1 = outfile(File, forms),
+	    {ok,Fd} = file:open(Out1, [write]),
+	    try [io:fwrite(Fd, "~p.~n", [F]) || F <- Result]
+	    after
+		file:close(Fd)
+	    end;
+       true -> ok
+    end,
+    if DoPP ->
+            Out2 = outfile(File, pp),
+            pp_src(Result, Out2),
+            io:fwrite("Pretty-printed in ~p~n", [Out2]);
+       true -> ok
+    end.
+
+option_value(Key, Options, Result) ->
+    case proplists:get_value(Key, Options) of
         undefined ->
-            case find_attribute(pt_pp_src,Result) of
+            case find_attribute(Key,Result) of
                 [Expr] ->
                     type(Expr) == atom andalso
                         atom_value(Expr) == true;
@@ -279,14 +316,6 @@ optionally_pretty_print(Result, Options, Context) ->
             end;
         V when is_boolean(V) ->
             V
-    end,
-    if DoPP ->
-            File = Context#context.file,
-            Out = outfile(File),
-            pp_src(Result, Out),
-            io:fwrite("Pretty-printed in ~p~n", [Out]);
-       true ->
-            ok
     end.
 
 
@@ -304,9 +333,13 @@ inspect(F, Acc, Forms, Options) ->
 
 
 
-outfile(File) ->
+outfile(File, Type) ->
     "lre." ++ RevF = lists:reverse(File),
-    lists:reverse("mfx." ++ RevF).
+    lists:reverse(RevF) ++ ext(Type).
+
+ext(pp)    -> ".xfm";
+ext(forms) -> ".xforms".
+    
 
 pp_src(Res, F) ->
     Str = [io_lib:fwrite("~s~n",
@@ -366,6 +399,7 @@ context(options,  #context{options = O} ) -> O.
 
 
 do_inspect(F, Acc, Forms, Context) ->
+    io:fwrite("do_inspect/4~n", []),
     F1 = 
         fun(Form, Acc0) ->
                 Type = type(Form),
@@ -381,7 +415,7 @@ do_inspect(F, Acc, Forms, Context) ->
                             end, Acc1, ListOfLists)
                   end)
         end,
-    lists:foldl(F1, Forms, Acc).
+    lists:foldl(F1, Acc, Forms).
 
 if_recurse(true, Form, Else, F) -> recurse(Form, Else, F);
 if_recurse(false, _, Else, _)   -> Else.
@@ -415,7 +449,8 @@ do_depth_first(F, Acc, Forms, Context) ->
     Rec = fun do_depth_first/4,  % this function
     F1 =
         fun(Form, Acc0) ->
-                {NewForm, NewAcc} = enter_subtrees(Form, F, Context, Acc, Rec),
+                {NewForm, NewAcc} =
+		    enter_subtrees(Form, F, Context, Acc0, Rec),
                 this_form_df(F, NewForm, Context, NewAcc)
         end,
     mapfoldl(F1, Acc, Forms).
