@@ -9,6 +9,7 @@
 
 
 -module(class_Creature).
+
 -wooper_superclasses([]).
 -wooper_attributes([age, gender]).
 -wooper_member_methods([getAge/1, setAge/2, declareBirthday/1, 
@@ -16,6 +17,9 @@
 			testDirectMethodExecution/2,
 			testSingleExecution/1]).
 -wooper_static_methods([example_fun/0, toString/1]).
+
+
+-include("wooper_class.hrl").
 
 % Determines what are the mother classes of this class (if any):
 -define(wooper_superclasses,[]).
@@ -50,9 +54,6 @@
 % Allows to define WOOPER base variables and methods for that class:
 -include("wooper.hrl").
 	
-
-init(State, Args) ->
-    apply(?MODULE, construct, [State|Args]).
 
 % Constructs a new Creature.
 construct(State,?wooper_construct_parameters) ->

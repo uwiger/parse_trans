@@ -46,12 +46,14 @@ testFailed(Reason) ->
 
 
 run() ->
-	io:format( ?Prefix "Testing module ~s.~n", [ ?Tested_module ] ),
-	io:format( ?Prefix "Debug mode: ~s.~n", 
-		[ class_Creature:is_wooper_debug() ] ),	
-	io:format( ?Prefix "Class name is ~s, superclasses are ~w.~n", [
-		class_Creature:get_class_name(), class_Creature:get_superclasses() ] ),
-	MyC = class_Creature:new(30,male),
+    io:format( ?Prefix "Testing module ~s.~n", [ ?Tested_module ] ),
+    io:format( ?Prefix "Debug mode: ~s.~n", 
+	       [ class_Creature:is_wooper_debug() ] ),	
+    io:format( ?Prefix "Class name is ~s, superclasses are ~w.~n",
+	       [class_Creature:get_class_name(),
+		class_Creature:get_superclasses() ] ),
+    MyC = class_Creature:new_link(30,male),
+    io:format("MyC = ~p~n", [MyC]),
 	MyC ! {getAge,[],self()},
 	receive
 	
@@ -91,6 +93,7 @@ run() ->
 				
 	end,	
 	MyC ! declareBirthday,
+	
 	MyC ! {getAge,[],self()},
 	receive
 	
@@ -106,7 +109,24 @@ run() ->
 	
 	MyC ! declareBirthday,
 	
-	MyC ! delete,	
+	
+	% Some more technical checkings:
+	
+	% Note to be called here, otherwise will fail:
+	%MyC ! {testDirectMethodExecution,36},
+	
+	MyC ! testSingleExecution,
+	
+	
+	% Ensures a synchronous ending:
+	MyC ! { synchronous_delete, self() },
+	receive
+	
+		{deleted,MyC} ->
+			io:format(?Prefix "Synchronous deletion succeedeed.~n" )
+	
+	end,
+		
 	io:format( ?Prefix "End of test for module ~s.~n", [ ?Tested_module ] ),
 	testFinished().
 

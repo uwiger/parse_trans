@@ -168,7 +168,8 @@
 % actually just an instance of the following record:
 -record( state_holder, {
 	   module,
-	   state
+	   state,
+	   request_sender
 	}).
 
 
@@ -177,23 +178,17 @@
 % the other exported functions. As macros cannot be substitued in strings
 % it would probably force the developer to list them twice.
 
+-ifdef(wooper_log_wanted).
+ -define(wooper_log(Msg),io:format(Msg)).
+ -define(wooper_log_format(Msg,Format),io:format(Msg,Format)).
+-else.  
+ -define(wooper_log(Msg),no_wooper_log).
+ -define(wooper_log_format(Msg,Format),no_wooper_log).
+-endif. 
 
--compile({parse_transform, wooper_parse_transform}).
-
-% The class name, as mapped to a module.
--define(className,?MODULE).
-
-
+-ifndef(wooper_return_state_result).
 -define(wooper_return_state_result(State,Result),{State,Result}).
+-endif.
+-ifndef(wooper_return_state_only).
 -define(wooper_return_state_only(State), State).
-
-
-% Approximate average attribute count for a given class instance, including
-% inherited ones (ideally should be slightly above the maximum number of
-% actual attributes for a given class)
--define(WooperAttributeCountUpperBound,16).
-
-
-
-
--define(getAttr(AttributeName), wooper:getAttribute(State, (AttributeName))).
+-endif.
