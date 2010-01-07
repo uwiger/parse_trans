@@ -1,5 +1,4 @@
 -module(test).
-%-compile({parse_transform,wooper_xform}).
 -compile({parse_transform, test_pt}).
 
 -export([f/1]).

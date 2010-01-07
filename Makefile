@@ -13,9 +13,6 @@ MODULELIST := $(subst $(space),$(comma),$(MODULES))
 TEST_SOURCES := $(wildcard test/*.erl)
 TEST_BEAMS := $(patsubst %.erl,%.beam, $(TEST_SOURCES))
 
-EXAMPLE_SOURCES := $(wildcard examples/*.erl)
-EXAMPLE_BEAMS := $(patsubst %.erl,%.beam, $(EXAMPLE_SOURCES))
-
 UTIL_SOURCES := $(wildcard util/*.erl)
 UTIL_BEAMS := $(patsubst %.erl,%.beam, $(UTIL_SOURCES))
 
@@ -23,7 +20,7 @@ include vsn.mk
 
 .PHONY: all clean dialyzer
 
-all: $(APPLICATION) doc util
+all: $(APPLICATION) doc util ex
 
 $(APPLICATION): $(BEAMS) $(APP_FILE) $(UTIL_BEAMS)
 
@@ -35,11 +32,9 @@ test/%.beam: test/%.erl
 	@echo Compiling $<
 	@erlc +debug_info -o test/ $<
 
-examples: $(EXAMPLE_BEAMS)
-
-examples/%.beam: examples/%.erl
-	@echo Compiling $<
-	@erlc -pa ebin -pa examples +debug_info -o examples/ $<
+ex:
+	@echo compiling examples...
+	cd examples; make
 
 $(APP_FILE): src/$(APPLICATION).app.src
 	@echo Generating $@
