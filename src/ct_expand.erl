@@ -1,7 +1,13 @@
 -module(ct_expand).
 -export([parse_transform/2]).
 
+-type form()    :: any().
+-type forms()   :: [form()].
+-type options() :: [{atom(), any()}].
 
+
+-spec parse_transform(forms(), options()) ->
+    forms().
 parse_transform(Forms, Options) ->
     {NewForms,_} = 
         parse_trans:depth_first(fun xform_fun/4, [], Forms, Options),

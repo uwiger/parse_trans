@@ -98,9 +98,9 @@
 -type options() :: [{atom(), any()}].
 -type type()    :: atom().
 -type xform_f() :: fun((type(), form(), #context{}, Acc) ->
-                              {form(), bool(), Acc}
-                                  | {forms(), form(), forms(), bool(), Acc}).
--type insp_f()  :: fun((type(), form(), #context{}, A) -> {bool(), A}).
+                              {form(), boolean(), Acc}
+                                  | {forms(), form(), forms(), boolean(), Acc}).
+-type insp_f()  :: fun((type(), form(), #context{}, A) -> {boolean(), A}).
                               
 
 %%% @spec (Reason, Form, Info) -> throw()
@@ -181,7 +181,7 @@ find_attribute(_, []) ->
     false.
 
 -spec function_exists(atom(), integer(), forms()) ->
-    bool().
+    boolean().
 function_exists(Fname, Arity, Forms) ->
     Fns = proplists:get_value(
             functions, erl_syntax_lib:analyze_forms(Forms), []),
@@ -241,7 +241,8 @@ do(Transform, Fun, Acc, Forms, Options) ->
 	    {error, [{File, [{Ln, ?MODULE, What}]}], []}
     end.
 
-
+-spec top(function(), forms(), list()) ->
+    forms() | {error, term()}.
 top(F, Forms, Options) ->
     Context = initial_context(Forms, Options),
     File = Context#context.file,
@@ -341,6 +342,8 @@ ext(pp)    -> ".xfm";
 ext(forms) -> ".xforms".
     
 
+-spec pp_src(forms(), string()) ->
+    ok.
 pp_src(Res, F) ->
     Str = [io_lib:fwrite("~s~n",
                          [lists:flatten([erl_pp:form(Fm) ||
@@ -362,6 +365,8 @@ pp_src(Res, F) ->
 %%% uses epp_dodger).</p>
 %%% @end
 %%%
+-spec get_orig_syntax_tree(string()) ->
+    forms().
 get_orig_syntax_tree(undefined) ->
     ?ERROR(unknown_source_file, ?HERE, []);
 get_orig_syntax_tree(File) ->
@@ -380,6 +385,8 @@ get_orig_syntax_tree(File) ->
 %%% regular Erlang forms.</p>
 %%% @end
 %%%
+-spec revert(forms()) ->
+    forms().
 revert(Tree) ->
     [erl_syntax:revert(T) || T <- lists:flatten(Tree)].
 
@@ -390,6 +397,8 @@ revert(Tree) ->
 %%% @doc
 %%% Accessor function for the Context record.
 %%% @end
+-spec context(atom(), #context{}) ->
+    term().
 context(module,   #context{module = M}  ) -> M;
 context(function, #context{function = F}) -> F;
 context(arity,    #context{arity = A}   ) -> A;
@@ -397,7 +406,8 @@ context(file,     #context{file = F}    ) -> F;
 context(options,  #context{options = O} ) -> O.
 
 
-
+-spec do_inspect(insp_f(), term(), forms(), #context{}) ->
+    term().
 do_inspect(F, Acc, Forms, Context) ->
     io:fwrite("do_inspect/4~n", []),
     F1 = 
@@ -428,7 +438,8 @@ recurse(Form, Else, F) ->
             F(ListOfLists)
     end.
 
-
+-spec do_transform(xform_f(), term(), forms(), #context{}) ->
+    {forms(), term()}.
 do_transform(F, Acc, Forms, Context) ->
     Rec = fun do_transform/4, % this function
     F1 =
@@ -445,6 +456,8 @@ do_transform(F, Acc, Forms, Context) ->
 	end,
     mapfoldl(F1, Acc, Forms).
 
+-spec do_depth_first(xform_f(), term(), forms(), #context{}) ->
+    {forms(), term()}.
 do_depth_first(F, Acc, Forms, Context) ->
     Rec = fun do_depth_first/4,  % this function
     F1 =
@@ -550,6 +563,7 @@ rpt_error(Reason, Fun, Info) ->
 	      end, [], Info)],
     io:format(Fmt, Args).
 
-
+-spec format_error({atom(), term()}) ->
+    iolist().
 format_error({_Cat, Error}) ->
     Error.

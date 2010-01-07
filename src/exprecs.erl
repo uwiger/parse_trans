@@ -114,6 +114,11 @@
             throw({error,get_pos(I),{unknown,R}})
         end).
 
+-type form()    :: any().
+-type forms()   :: [form()].
+-type options() :: [{atom(), any()}].
+
+
 get_pos(I) ->
     case proplists:get_value(form, I) of
 	undefined ->
@@ -122,6 +127,8 @@ get_pos(I) ->
 	    erl_syntax:get_pos(Form)
     end.
 
+-spec parse_transform(forms(), options()) ->
+    forms().
 parse_transform(Forms, Options) ->
     parse_trans:top(fun do_transform/2, Forms, Options).
 
@@ -246,10 +253,10 @@ flat_versions(Vsns) ->
 split_recnames(Rs) ->
     lists:foldl(
       fun({R,_As}, Acc) ->
-              case regexp:split(atom_to_list(R), "__") of
-                  {ok, [Base, V]} ->
+	      case re:split(atom_to_list(R), "__", [{return, list}]) of
+                  [Base, V] ->
                       orddict:append(Base,V,Acc);
-                  {ok,[_]} ->
+                  [_] ->
                       Acc
               end
       end, orddict:new(), Rs).
@@ -606,6 +613,8 @@ f_convert(_Vsns, L) ->
 
 %%% ========== generic parse_transform stuff ==============
 
+-spec context(atom(), #context{}) ->
+    term().
 context(module,   #context{module = M}  ) -> M;
 context(function, #context{function = F}) -> F;
 context(arity,    #context{arity = A}   ) -> A.
@@ -710,6 +719,7 @@ rpt_error(Reason, Fun, Info) ->
 	      end, [], Info)],
     io:format(Fmt, Args).
 
-
+-spec format_error({atom(), term()}) ->
+    iolist().
 format_error({_Cat, Error}) ->
     Error.
