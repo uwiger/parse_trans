@@ -201,9 +201,9 @@ function_exists(Fname, Arity, Forms) ->
     #context{}.
 initial_context(Forms, Options) ->
     File = get_file(Forms),
-    io:fwrite("File = ~p~n", [File]),
+%%    io:fwrite("File = ~p~n", [File]),
     Module = get_module(Forms),
-    io:fwrite("Module = ~p~n", [Module]),
+%%    io:fwrite("Module = ~p~n", [Module]),
     #context{file = File,
              module = Module,
              options = Options}.
@@ -409,7 +409,7 @@ context(options,  #context{options = O} ) -> O.
 -spec do_inspect(insp_f(), term(), forms(), #context{}) ->
     term().
 do_inspect(F, Acc, Forms, Context) ->
-    io:fwrite("do_inspect/4~n", []),
+%%    io:fwrite("do_inspect/4~n", []),
     F1 = 
         fun(Form, Acc0) ->
                 Type = type(Form),

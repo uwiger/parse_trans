@@ -133,10 +133,10 @@ parse_transform(Forms, Options) ->
     parse_trans:top(fun do_transform/2, Forms, Options).
 
 do_transform(Forms, Context) ->
-    io:fwrite("in do_transform/2~n", []),
+%%    io:fwrite("in do_transform/2~n", []),
     Acc1 = versioned_records(
 	     parse_trans:do_inspect(fun inspect_f/4, #pass1{}, Forms, Context)),
-    io:fwrite("Acc1 = ~p~n", [Acc1]),
+%%    io:fwrite("Acc1 = ~p~n", [Acc1]),
     {Forms2, Acc2} =
 	parse_trans:do_transform(fun generate_f/4, Acc1, Forms, Context),
     parse_trans:revert(verify_generated(Forms2, Acc2, Context)).
@@ -212,7 +212,7 @@ check_record_names(Es, L, #pass1{records = Rs}) ->
     end.
 
 versioned_records(#pass1{exports = Es, records = Rs} = Pass1) ->
-    io:fwrite("versioned_records/1~n", []),
+%%    io:fwrite("versioned_records/1~n", []),
     case split_recnames(Rs) of
         [] ->
             Pass1#pass1{versions = []};
@@ -349,7 +349,8 @@ f_new_1(Rname, L) ->
        }]}.
 
 f_set_2(Rname, Flds, L) ->
-    {function, L, fname(set, Rname), 2,
+    Fname = fname(set, Rname),
+    {function, L, Fname, 2,
      [{clause, L, [{var, L, 'Vals'}, {var, L, 'Rec'}], [],
        [{match, L, {var, L, 'F'},
 	 {'fun', L, 
@@ -372,10 +373,22 @@ f_set_2(Rname, Flds, L) ->
 		  [{record_field, L,
 		    {atom, L, Attr},
 		    {var, L, 'V'}}]},
-		 {var, L, 'F1'}]}]} || Attr <- Flds]]}}},
+		 {var, L, 'F1'}]}]} || Attr <- Flds]
+	    ++ [{clause, L, [{var, L, 'Vs'}, {var,L,'R'},{var,L,'_'}],
+		 [],
+		 [bad_record_op(L, Fname, 'Vs', 'R')]}]
+	    ]}}},
 	{call, L, {var, L, 'F'}, [{var, L, 'Vals'},
 				  {var, L, 'Rec'},
 				  {var, L, 'F'}]}]}]}.
+
+bad_record_op(L, Fname, Val, R) ->
+    {call, L, {remote, L, {atom,L,erlang}, {atom,L,error}},
+     [{atom,L,bad_record_op}, {cons, L, {atom, L, Fname},
+			       {cons, L, {var, L, Val},
+				{cons, L, {var, L, R},
+				 {nil, L}}}}]}.
+    
 
 f_fromlist_2(Rname, Flds, L) ->
     Fname = fname(fromlist, Rname),
@@ -432,7 +445,9 @@ f_get_2(Rname, Flds, L) ->
        } |
       [{clause, L, [{atom, L, Attr}, {var, L, 'R'}], [],
 	[{record_field, L, {var, L, 'R'}, Rname, {atom, L, Attr}}]} ||
-	  Attr <- Flds]]
+	  Attr <- Flds]] ++
+     [{clause, L, [{var, L, 'Attr'}, {var, L, 'R'}], [],
+       [bad_record_op(L, FName, 'Attr', 'R')]}]
     }.
 
 
@@ -493,8 +508,8 @@ f_info_3(Versions, L) ->
        [],
        [{call, L, {atom, L, fname(info,R,V)}, [{var, L, 'Info'}]}]} ||
          {R,V} <- flat_versions(Versions)]},
-    io:fwrite("Versions = ~p~n", [Versions]),
-    io:fwrite("F = ~p~n", [F]),
+%%    io:fwrite("Versions = ~p~n", [Versions]),
+%%    io:fwrite("F = ~p~n", [F]),
     F.
 
 
