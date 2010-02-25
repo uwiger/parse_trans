@@ -73,7 +73,7 @@ util/my_plt.plt: util/make_plt.beam
 clean:
 	@echo Cleaning
 	@rm -f ebin/*.{beam,app} test/*.beam doc/*.{html,css,png} doc/edoc-info
-	@rm -r cover_report
+#	@rm -r cover_report
 	@rm -f util/*.beam
 
 release: clean all test dialyzer

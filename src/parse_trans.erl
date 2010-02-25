@@ -64,7 +64,8 @@
          get_orig_syntax_tree/1,
          function_exists/3,
          optionally_pretty_print/3,
-         pp_src/2
+         pp_src/2,
+         pp_beam/1, pp_beam/2
         ]).
 
 -import(erl_syntax, [atom_value/1,
@@ -117,6 +118,13 @@ error(R, F, I) ->
     throw({error,get_pos(I),{unknown,R}}).
 
 
+%% @spec (list()) -> integer()
+%%
+%% @doc
+%% Tries to retrieve the line number from an erl_syntax form. Returns a 
+%% (very high) dummy number if not successful.
+%% @end
+%%
 -spec get_pos(list()) ->
     integer().
 get_pos(I) when is_list(I) ->
@@ -180,6 +188,12 @@ find_attribute(A, [F|Forms]) ->
 find_attribute(_, []) ->
     false.
 
+%% @spec (Fname::atom(), Arity::integer(), Forms) -> boolean()
+%%
+%% @doc
+%% Checks whether the given function is defined in Forms.
+%% @end
+%%
 -spec function_exists(atom(), integer(), forms()) ->
     boolean().
 function_exists(Fname, Arity, Forms) ->
@@ -342,6 +356,10 @@ ext(pp)    -> ".xfm";
 ext(forms) -> ".xforms".
     
 
+%% @spec (Forms, Out::filename()) -> ok
+%%
+%% @doc Pretty-prints the erlang source code corresponding to Forms into Out
+%%
 -spec pp_src(forms(), string()) ->
     ok.
 pp_src(Res, F) ->
@@ -349,6 +367,46 @@ pp_src(Res, F) ->
                          [lists:flatten([erl_pp:form(Fm) ||
                                             Fm <- revert(Res)])])],
     file:write_file(F, list_to_binary(Str)).
+
+%% @spec (Beam::filename()) -> string() | {error, Reason}
+%%
+%% @doc
+%% Reads debug_info from the beam file Beam and returns a string containing
+%% the pretty-printed corresponding erlang source code.
+%% @end
+pp_beam(Beam) ->
+    case pp_beam_to_str(Beam) of
+        {ok, Str} ->
+            io:put_chars(Str);
+        Other ->
+            Other
+    end.
+
+%% @spec (Beam::filename(), Out::filename()) -> ok | {error, Reason}
+%%
+%% @doc
+%% Reads debug_info from the beam file Beam and pretty-prints it as 
+%% Erlang source code, storing it in the file Out.
+%% @end
+%%
+pp_beam(F, Out) ->
+    case pp_beam_to_str(F) of
+        {ok, Str} ->
+            file:write_file(Out, list_to_binary(Str));
+        Other ->
+            Other
+    end.
+
+pp_beam_to_str(F) ->
+    case beam_lib:chunks(F, [abstract_code]) of
+        {ok, {_, [{abstract_code,{_,AC}}]}} ->
+            {ok, lists:flatten(
+                   io_lib:fwrite("~s~n", [erl_prettypr:format(
+                                            erl_syntax:form_list(AC))])
+                  )};
+        Other ->
+            {error, Other}
+    end.
 
 %% pp_debug_info(Mod) when is_atom(Mod) ->
 %%     case code:which(Mod) of

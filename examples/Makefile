@@ -4,7 +4,7 @@ BEAMS := $(patsubst %.erl,%.beam,$(SOURCES))
 
 .PHONY: all clean
 
-all: $(BEAMS) 
+all: $(BEAMS)
 
 test: $(APPLICATION) $(TEST_BEAMS) ../util/run_test.beam
 	@echo Running tests
@@ -16,9 +16,12 @@ test: $(APPLICATION) $(TEST_BEAMS) ../util/run_test.beam
 
 test.beam: test_pt.beam
 
+test_exprecs.erl: ../ebin/exprecs.beam
+
 clean:
 	@echo Cleaning
 	@rm -f *.beam
 	@rm -f *~
 	@rm -f *.xfm
+	@rm -f *.xforms
 

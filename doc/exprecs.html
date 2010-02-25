@@ -14,83 +14,101 @@
 <p><b>Authors:</b> : Ulf Wiger (<a href="mailto:ulf.wiger@ericsson.com"><tt>ulf.wiger@ericsson.com</tt></a>).</p>
 
 <h2><a name="description">Description</a></h2>Parse transform for generating record access functions.
-   <p>This parse transform can be used to reduce compile-time
-   dependencies in large systems.</p>
-   <p>In the old days, before records, Erlang programmers often wrote
-   access functions for tuple data. This was tedious and error-prone.
-   The record syntax made this easier, but since records were implemented
-   fully in the pre-processor, a nasty compile-time dependency was
-   introduced.</p>
-   <p>This module automates the generation of access functions for
-   records. While this method cannot fully replace the utility of
-   pattern matching, it does allow a fair bit of functionality on
-   records without the need for compile-time dependencies.</p>
-   <p>Whenever record definitions need to be exported from a module,
-   inserting a compiler attribute,
-   <code>export_records([RecName|...])</code> causes this transform
-   to lay out access functions for the exported records:</p>
-  
-   <pre>
-   -module(foo)
-   -compile({parse_transform, dia_exprecs}).
-  
-   -record(a, {a, b, c}).
-   -export_records([a]).
-   -export(['#info-'/1, '#info-'/2,
-            '#get-'/2, '#set-'/2,
-            '#new-a'/0, '#new-a'/1,
-            '#get-a'/2, '#set-a'/2,
-            '#info-a'/1]).
-  
-   '#info-'(Rec) -&gt;
-       '#info-'(Rec, fields).
-  
-   '#info-'(a, Info) -&gt;
-       '#info-a'(Info).
-  
-   '#new-a'() -&gt; #a{}.
-   '#new-a'(Vals) -&gt; '#set-a'(Vals, #a{}).
-  
-   '#get-'(Attrs, Rec) when is_record(Rec, a) -&gt;
-       '#get-a'(Attrs, Rec).
-  
-   '#get-a'(Attrs, R) when is_list(Attrs) -&gt;
-       ['#get-a'(A, R) || A &lt;- Attrs];
-   '#get-a'(a, R) -&gt; R#a.a;
-   '#get-a'(b, R) -&gt; R#a.b;
-   '#get-a'(c, R) -&gt; R#a.c.
-  
-   '#set-'(Vals, Rec) when is_record(Rec, a) -&gt;
-       '#set-a'(Vals, Rec).
-  
-   '#set-a'(Vals, Rec) -&gt;
-       F = fun ([], R, _F1) -&gt; R;
-               ([{a, V} | T], R, F1) -&gt; F1(T, R#a{a = V}, F1);
-               ([{b, V} | T], R, F1) -&gt; F1(T, R#a{b = V}, F1);
-               ([{c, V} | T], R, F1) -&gt; F1(T, R#a{c = V}, F1)
-           end,
-       F(Vals, Rec, F).
-  
-   '#info-a'(fields) -&gt; record_info(fields, a);
-   '#info-a'(size) -&gt; record_info(size, a).
-   </pre>
+  <p>This parse transform can be used to reduce compile-time
+  dependencies in large systems.</p>
+  <p>In the old days, before records, Erlang programmers often wrote
+  access functions for tuple data. This was tedious and error-prone.
+  The record syntax made this easier, but since records were implemented
+  fully in the pre-processor, a nasty compile-time dependency was
+  introduced.</p>
+  <p>This module automates the generation of access functions for
+  records. While this method cannot fully replace the utility of
+  pattern matching, it does allow a fair bit of functionality on
+  records without the need for compile-time dependencies.</p>
+  <p>Whenever record definitions need to be exported from a module,
+  inserting a compiler attribute,
+  <code>export_records([RecName|...])</code> causes this transform
+  to lay out access functions for the exported records:</p>
+ 
+  <pre>
+  -module(test_exprecs).
+ 
+  -record(r, {a, b, c}).
+  -export_records([r]).
+ 
+  -export(['#new-'/1, '#info-'/1, '#info-'/2, '#pos-'/2,
+           '#is_record-'/2, '#get-'/2, '#set-'/2, '#fromlist-'/2,
+           '#new-r'/0, '#new-r'/1, '#get-r'/2, '#set-r'/2,
+           '#pos-r'/1, '#fromlist-r'/2, '#info-r'/1]).
+ 
+  '#new-'(r) -&gt; '#new-r'().
+ 
+  '#info-'(RecName) -&gt; '#info-'(RecName, fields).
+ 
+  '#info-'(r, Info) -&gt; '#info-r'(Info).
+ 
+  '#pos-'(r, Attr) -&gt; '#pos-r'(Attr).
+ 
+  '#is_record-'(r, Rec)
+      when tuple_size(Rec) == 3, element(1, Rec) == r -&gt;
+      true;
+  '#is_record-'(_, _) -&gt; false.
+ 
+  '#get-'(Attrs, Rec) when is_record(Rec, r) -&gt;
+      '#get-r'(Attrs, Rec).
+ 
+  '#set-'(Vals, Rec) when is_record(Rec, r) -&gt;
+      '#set-r'(Vals, Rec).
+ 
+  '#fromlist-'(Vals, Rec) when is_record(Rec, r) -&gt;
+      '#fromlist-r'(Vals, Rec).
+ 
+  '#new-r'() -&gt; #r{}.
+ 
+  '#new-r'(Vals) -&gt; '#set-r'(Vals, #r{}).
+ 
+  '#get-r'(Attrs, R) when is_list(Attrs) -&gt;
+      ['#get-r'(A, R) || A &lt;- Attrs];
+  '#get-r'(a, R) -&gt; R#r.a;
+  '#get-r'(b, R) -&gt; R#r.b;
+  '#get-r'(c, R) -&gt; R#r.c;
+  '#get-r'(Attr, R) -&gt;
+      erlang:error(bad_record_op, ['#get-r', Attr, R]).
+ 
+  '#set-r'(Vals, Rec) -&gt;
+      F = fun ([], R, _F1) -&gt; R;
+              ([{a, V} | T], R, F1) -&gt; F1(T, R#r{a = V}, F1);
+              ([{b, V} | T], R, F1) -&gt; F1(T, R#r{b = V}, F1);
+              ([{c, V} | T], R, F1) -&gt; F1(T, R#r{c = V}, F1);
+              (Vs, R, _) -&gt;
+                  erlang:error(bad_record_op, ['#set-r', Vs, R])
+          end,
+      F(Vals, Rec, F).
+ 
+  '#fromlist-r'(Vals, Rec) -&gt;
+      AttrNames = [{a, 2}, {b, 3}, {c, 4}],
+      F = fun ([], R, _F1) -&gt; R;
+              ([{H, Pos} | T], R, F1) -&gt;
+                  case lists:keyfind(H, 1, Vals) of
+                    false -&gt; F1(T, R, F1);
+                    {_, Val} -&gt; F1(T, setelement(Pos, R, Val), F1)
+                  end
+          end,
+      F(AttrNames, Rec, F).
+ 
+  '#pos-r'(a) -&gt; 2;
+  '#pos-r'(b) -&gt; 3;
+  '#pos-r'(c) -&gt; 4;
+  '#pos-r'(_) -&gt; 0.
+ 
+  '#info-r'(fields) -&gt; record_info(fields, r);
+  '#info-r'(size) -&gt; record_info(size, r).
+  </pre>
 <h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#context-2">context/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#format_error-1">format_error/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#parse_transform-2">parse_transform/2</a></td><td></td></tr>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#parse_transform-2">parse_transform/2</a></td><td></td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
-
-<h3 class="function"><a name="context-2">context/2</a></h3>
-<div class="spec">
-<p><tt>context(X1, Context) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="format_error-1">format_error/1</a></h3>
-<div class="spec">
-<p><tt>format_error(X1) -&gt; any()</tt></p>
-</div>
 
 <h3 class="function"><a name="parse_transform-2">parse_transform/2</a></h3>
 <div class="spec">
@@ -99,6 +117,6 @@
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Jan 10 2010, 19:56:29.</i></p>
+<p><i>Generated by EDoc, Feb 25 2010, 07:32:25.</i></p>
 </body>
 </html>

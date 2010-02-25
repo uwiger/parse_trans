@@ -1,92 +1,124 @@
-%%% The contents of this file are subject to the Erlang Public License,
-%%% Version 1.0, (the "License"); you may not use this file except in
-%%% compliance with the License. You may obtain a copy of the License at
-%%% http://www.erlang.org/license/EPL1_0.txt
-%%%
-%%% Software distributed under the License is distributed on an "AS IS"
-%%% basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
-%%% the License for the specific language governing rights and limitations
-%%% under the License.
-%%%
-%%% The Original Code is exprecs-0.2.
-%%%
-%%% The Initial Developer of the Original Code is Ericsson AB.
-%%% Portions created by Ericsson are Copyright (C), 2006, Ericsson AB.
-%%% All Rights Reserved.
-%%%
-%%% Contributor(s): ______________________________________.
+%% The contents of this file are subject to the Erlang Public License,
+%% Version 1.0, (the "License"); you may not use this file except in
+%% compliance with the License. You may obtain a copy of the License at
+%% http://www.erlang.org/license/EPL1_0.txt
+%%
+%% Software distributed under the License is distributed on an "AS IS"
+%% basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
+%% the License for the specific language governing rights and limitations
+%% under the License.
+%%
+%% The Original Code is exprecs-0.2.
+%%
+%% Copyright (c) 2010 Erlang Solutions Ltd.
+%% The Initial Developer of the Original Code is Ericsson AB.
+%% Portions created by Ericsson are Copyright (C), 2006, Ericsson AB.
+%% All Rights Reserved.
+%%
+%% Contributor(s): ______________________________________.
 
-%%%-------------------------------------------------------------------
-%%% File    : exprecs.erl
-%%% @author  : Ulf Wiger <ulf.wiger@ericsson.com>
-%%% @end
-%%% Description : 
-%%%
-%%% Created : 13 Feb 2006 by Ulf Wiger <ulf.wiger@ericsson.com>
-%%%-------------------------------------------------------------------
+%%-------------------------------------------------------------------
+%% File    : exprecs.erl
+%% @author  : Ulf Wiger <ulf.wiger@ericsson.com>
+%% @end
+%% Description : 
+%%
+%% Created : 13 Feb 2006 by Ulf Wiger <ulf.wiger@ericsson.com>
+%% Rewritten: Jan-Feb 2010 by Ulf Wiger <ulf.wiger@elang-solutions.com>
+%%-------------------------------------------------------------------
 
-%%% @doc Parse transform for generating record access functions.
-%%% <p>This parse transform can be used to reduce compile-time 
-%%% dependencies in large systems.</p>
-%%% <p>In the old days, before records, Erlang programmers often wrote
-%%% access functions for tuple data. This was tedious and error-prone.
-%%% The record syntax made this easier, but since records were implemented
-%%% fully in the pre-processor, a nasty compile-time dependency was 
-%%% introduced.</p>
-%%% <p>This module automates the generation of access functions for 
-%%% records. While this method cannot fully replace the utility of 
-%%% pattern matching, it does allow a fair bit of functionality on 
-%%% records without the need for compile-time dependencies.</p>
-%%% <p>Whenever record definitions need to be exported from a module,
-%%% inserting a compiler attribute,
-%%% <code>export_records([RecName|...])</code> causes this transform
-%%% to lay out access functions for the exported records:</p>
-%%%
-%%% <pre>
-%%% -module(foo)
-%%% -compile({parse_transform, dia_exprecs}).
-%%%
-%%% -record(a, {a, b, c}).
-%%% -export_records([a]).
-%%% -export(['#info-'/1, '#info-'/2,
-%%%          '#get-'/2, '#set-'/2,
-%%%          '#new-a'/0, '#new-a'/1,
-%%%          '#get-a'/2, '#set-a'/2,
-%%%          '#info-a'/1]).
-%%%
-%%% '#info-'(Rec) -&gt;
-%%%     '#info-'(Rec, fields).
-%%%
-%%% '#info-'(a, Info) -&gt;
-%%%     '#info-a'(Info).
-%%%
-%%% '#new-a'() -&gt; #a{}.
-%%% '#new-a'(Vals) -&gt; '#set-a'(Vals, #a{}).
-%%%
-%%% '#get-'(Attrs, Rec) when is_record(Rec, a) -&gt;
-%%%     '#get-a'(Attrs, Rec).
-%%%
-%%% '#get-a'(Attrs, R) when is_list(Attrs) -&gt;
-%%%     ['#get-a'(A, R) || A &lt;- Attrs];
-%%% '#get-a'(a, R) -&gt; R#a.a;
-%%% '#get-a'(b, R) -&gt; R#a.b;
-%%% '#get-a'(c, R) -&gt; R#a.c.
-%%%
-%%% '#set-'(Vals, Rec) when is_record(Rec, a) -&gt;
-%%%     '#set-a'(Vals, Rec).
-%%%
-%%% '#set-a'(Vals, Rec) -&gt;
-%%%     F = fun ([], R, _F1) -> R;
-%%%             ([{a, V} | T], R, F1) -&gt; F1(T, R#a{a = V}, F1);
-%%%             ([{b, V} | T], R, F1) -&gt; F1(T, R#a{b = V}, F1);
-%%%             ([{c, V} | T], R, F1) -&gt; F1(T, R#a{c = V}, F1)
-%%%         end,
-%%%     F(Vals, Rec, F).
-%%%
-%%% '#info-a'(fields) -&gt; record_info(fields, a);
-%%% '#info-a'(size) -&gt; record_info(size, a).
-%%% </pre>
-%%% @end
+%% @doc Parse transform for generating record access functions.
+%% <p>This parse transform can be used to reduce compile-time 
+%% dependencies in large systems.</p>
+%% <p>In the old days, before records, Erlang programmers often wrote
+%% access functions for tuple data. This was tedious and error-prone.
+%% The record syntax made this easier, but since records were implemented
+%% fully in the pre-processor, a nasty compile-time dependency was 
+%% introduced.</p>
+%% <p>This module automates the generation of access functions for 
+%% records. While this method cannot fully replace the utility of 
+%% pattern matching, it does allow a fair bit of functionality on 
+%% records without the need for compile-time dependencies.</p>
+%% <p>Whenever record definitions need to be exported from a module,
+%% inserting a compiler attribute,
+%% <code>export_records([RecName|...])</code> causes this transform
+%% to lay out access functions for the exported records:</p>
+%%
+%% <pre>
+%% -module(test_exprecs).
+%%
+%% -record(r, {a, b, c}).
+%% -export_records([r]).
+%%
+%% -export(['#new-'/1, '#info-'/1, '#info-'/2, '#pos-'/2,
+%%          '#is_record-'/2, '#get-'/2, '#set-'/2, '#fromlist-'/2,
+%%          '#new-r'/0, '#new-r'/1, '#get-r'/2, '#set-r'/2,
+%%          '#pos-r'/1, '#fromlist-r'/2, '#info-r'/1]).
+%%
+%% '#new-'(r) -&gt; '#new-r'().
+%%
+%% '#info-'(RecName) -&gt; '#info-'(RecName, fields).
+%%
+%% '#info-'(r, Info) -&gt; '#info-r'(Info).
+%%
+%% '#pos-'(r, Attr) -&gt; '#pos-r'(Attr).
+%%
+%% '#is_record-'(r, Rec)
+%%     when tuple_size(Rec) == 3, element(1, Rec) == r -&gt;
+%%     true;
+%% '#is_record-'(_, _) -&gt; false.
+%%
+%% '#get-'(Attrs, Rec) when is_record(Rec, r) -&gt;
+%%     '#get-r'(Attrs, Rec).
+%%
+%% '#set-'(Vals, Rec) when is_record(Rec, r) -&gt;
+%%     '#set-r'(Vals, Rec).
+%%
+%% '#fromlist-'(Vals, Rec) when is_record(Rec, r) -&gt;
+%%     '#fromlist-r'(Vals, Rec).
+%%
+%% '#new-r'() -&gt; #r{}.
+%%
+%% '#new-r'(Vals) -&gt; '#set-r'(Vals, #r{}).
+%%
+%% '#get-r'(Attrs, R) when is_list(Attrs) -&gt;
+%%     ['#get-r'(A, R) || A &lt;- Attrs];
+%% '#get-r'(a, R) -&gt; R#r.a;
+%% '#get-r'(b, R) -&gt; R#r.b;
+%% '#get-r'(c, R) -&gt; R#r.c;
+%% '#get-r'(Attr, R) -&gt;
+%%     erlang:error(bad_record_op, ['#get-r', Attr, R]).
+%%
+%% '#set-r'(Vals, Rec) -&gt;
+%%     F = fun ([], R, _F1) -&gt; R;
+%%             ([{a, V} | T], R, F1) -&gt; F1(T, R#r{a = V}, F1);
+%%             ([{b, V} | T], R, F1) -&gt; F1(T, R#r{b = V}, F1);
+%%             ([{c, V} | T], R, F1) -&gt; F1(T, R#r{c = V}, F1);
+%%             (Vs, R, _) -&gt;
+%%                 erlang:error(bad_record_op, ['#set-r', Vs, R])
+%%         end,
+%%     F(Vals, Rec, F).
+%%
+%% '#fromlist-r'(Vals, Rec) -&gt;
+%%     AttrNames = [{a, 2}, {b, 3}, {c, 4}],
+%%     F = fun ([], R, _F1) -&gt; R;
+%%             ([{H, Pos} | T], R, F1) -&gt;
+%%                 case lists:keyfind(H, 1, Vals) of
+%%                   false -&gt; F1(T, R, F1);
+%%                   {_, Val} -&gt; F1(T, setelement(Pos, R, Val), F1)
+%%                 end
+%%         end,
+%%     F(AttrNames, Rec, F).
+%%
+%% '#pos-r'(a) -&gt; 2;
+%% '#pos-r'(b) -&gt; 3;
+%% '#pos-r'(c) -&gt; 4;
+%% '#pos-r'(_) -&gt; 0.
+%%
+%% '#info-r'(fields) -&gt; record_info(fields, r);
+%% '#info-r'(size) -&gt; record_info(size, r).
+%% </pre>
+%% @end
 
 -module(exprecs).
 
@@ -163,6 +195,7 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
     Exports = [{fname(new), 1},
 	       {fname(info), 1},
 	       {fname(info), 2},
+               {fname(pos), 2},
 	       {fname(isrec), 2},
 	       {fname(get), 2},
 	       {fname(set), 2},
@@ -174,6 +207,7 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
 			 [{FNew, 0}, {FNew,1},
 			  {fname(get, RecS), 2},
 			  {fname(set, RecS), 2},
+                          {fname(pos, RecS), 1},
 			  {fname(fromlist, RecS), 2},
 			  {fname(info, RecS), 1}]
 		 end, Es)] ++ version_exports(Vsns),
@@ -271,6 +305,7 @@ generate_accessors(L, Acc) ->
     [f_new_(Acc, L),
      f_info(Acc, L),
      f_info_2(Acc, L),
+     f_pos_2(Acc, L),
      f_isrec(Acc, L),
      f_get(Acc, L),
      f_set(Acc, L),
@@ -284,6 +319,7 @@ generate_accessors(L, Acc) ->
 		  f_get_2(Rname, Fields, L),
 		  f_set_2(Rname, Fields, L),
 		  f_fromlist_2(Rname, Fields, L),
+                  f_pos_1(Rname, Fields, L),
 		  f_info_1(Rname, L)]
 	 end, Acc#pass1.exports))] ++ version_accessors(L, Acc).
 
@@ -302,9 +338,10 @@ fname_prefix(Op) ->
 	get -> "#get-";
 	set -> "#set-";
 	fromlist -> "#fromlist-";
-	info -> "#info-";
-	isrec -> "#is_record-";
-        convert -> "#convert-"
+	info     -> "#info-";
+        pos      -> "#pos-";
+	isrec    -> "#is_record-";
+        convert  -> "#convert-"
     end.
 
 fname_prefix(Op, Rname) ->
@@ -390,10 +427,23 @@ bad_record_op(L, Fname, Val, R) ->
 				 {nil, L}}}}]}.
     
 
+
+f_pos_1(Rname, Flds, L) ->
+    Fname = fname(pos, Rname),
+    FieldList = lists:zip(Flds, lists:seq(2, length(Flds)+1)),
+    {function, L, Fname, 1,
+     [{clause, L,
+       [{atom, L, FldName}],
+       [],
+       [{integer, L, Pos}]} || {FldName, Pos} <- FieldList] ++
+     [{clause, L,
+       [{var, L, '_'}], [], [{integer, L, 0}]}]
+    }.
+
+
 f_fromlist_2(Rname, Flds, L) ->
     Fname = fname(fromlist, Rname),
-    FldList = erl_parse:abstract(
-		lists:zip(Flds, lists:seq(2, length(Flds)+1))),
+    FldList = field_list(Flds),
     {function, L, Fname, 2,
      [{clause, L, [{var, L, 'Vals'}, {var, L, 'Rec'}], [],
        [{match, L, {var, L, 'AttrNames'}, FldList},
@@ -433,6 +483,11 @@ f_fromlist_2(Rname, Flds, L) ->
 				  {var, L, 'F'}]}
        ]}
      ]}.
+
+field_list(Flds) ->
+    erl_parse:abstract(
+      lists:zip(Flds, lists:seq(2, length(Flds)+1))).
+
 
 
 f_get_2(Rname, Flds, L) ->
@@ -512,6 +567,16 @@ f_info_3(Versions, L) ->
 %%    io:fwrite("F = ~p~n", [F]),
     F.
 
+f_pos_2(Acc, L) ->
+    Fname = list_to_atom(fname_prefix(pos)),
+    {function, L, Fname, 2,
+     [{clause, L,
+       [{atom, L, R},
+	{var, L, 'Attr'}],
+       [],
+       [{call, L, {atom, L, fname(pos, R)}, [{var, L, 'Attr'}]}]} ||
+	 R <- Acc#pass1.exports]}.
+
 
 f_get(Acc, L) ->
     Fname = list_to_atom(fname_prefix(get)),
@@ -525,6 +590,7 @@ f_get(Acc, L) ->
        [{call, L, {atom, L, fname(get, R)}, [{var, L, 'Attrs'},
 					     {var, L, 'Rec'}]}]} ||
 	 R <- Acc#pass1.exports]}.
+
 
 f_set(Acc, L) ->
     Fname = list_to_atom(fname_prefix(set)),
@@ -630,94 +696,10 @@ f_convert(_Vsns, L) ->
 
 -spec context(atom(), #context{}) ->
     term().
+%% @hidden
 context(module,   #context{module = M}  ) -> M;
 context(function, #context{function = F}) -> F;
 context(arity,    #context{arity = A}   ) -> A.
-
-
-% transform(Forms, F, Acc) ->
-%     case  [{L,M} || {attribute, L, module, M} <- Forms] of
-% 	[{_,Module}] ->
-% 	    transform(Forms, F, #context{module = Module}, Acc);
-% 	[] ->
-% 	    ?ERROR(missing_module_attribute, ?HERE, []);
-% 	[_|_] = Multiple ->
-% 	    ?ERROR(multiple_module_attributes, ?HERE,
-% 		   [{L,{module,M}} || {L,M} <- Multiple])
-%     end.
-
-% transform(Forms, F, Context, Acc) ->
-%     F1 =
-% 	fun(Form, Acc0) ->
-% 		Type = erl_syntax:type(Form),
-% 		{Before1, Form1, After1, Recurse, Acc1} =
-% 		    try F(Type, Form, Context, Acc0) of
-% 			{F1, Rec1, A1} ->
-% 			    {[], F1, [], Rec1, A1};
-% 			{_Be1, _F1, _Af1, _Rec1, _Ac1} = Res1 ->
-% 			    Res1
-% 		    catch
-% 			error:Reason ->
-% 			    ?ERROR(Reason,
-% 				   ?HERE,
-% 				   [{type, Type},
-% 				    {context, Context},
-% 				    {acc, Acc},
-% 				    {form, Form}])
-% 		    end,
-% 		if Recurse == true ->
-% 			case erl_syntax:subtrees(Form1) of
-% 			    [] ->
-% 				{Before1, Form1, After1, Acc1};
-% 			    ListOfLists ->
-% 				{NewListOfLists, NewAcc} =
-% 				    mapfoldl(
-% 				      fun(L, AccX) ->
-% 					      transform(
-% 						L, F, 
-% 						new_context(
-% 						  Form1, Context), AccX)
-% 				      end, Acc1, ListOfLists),
-% 				NewForm =
-% 				    erl_syntax:update_tree(
-% 				      Form, NewListOfLists),
-% 				{Before1, NewForm, After1, NewAcc}
-% 			end;
-% 		   true ->
-% 			{Before1, Form1, After1, Acc1}
-% 		end
-% 	end,
-%     mapfoldl(F1, Acc, Forms).
-
-
-% new_context(Form, Context0) ->
-%     case erl_syntax:type(Form) of
-% 	function ->
-% 	    {Fun, Arity} =
-% 		erl_syntax_lib:analyze_function(Form),
-% 	    Context0#context{function = Fun,
-% 			     arity = Arity};
-% 	_ ->
-% 	    Context0
-%     end.
-
-
-
-
-%%% Slightly modified version of lists:mapfoldl/3
-%%% Here, F/2 is able to insert forms before and after the form
-%%% in question. The inserted forms are not transformed afterwards.
-% mapfoldl(F, Accu0, [Hd|Tail]) ->
-%     {Before, Res, After, Accu1} =
-% 	case F(Hd, Accu0) of
-% 	    {Be, _, Af, _} = Result when is_list(Be), is_list(Af) ->
-% 		Result;
-% 	    {R1, A1} ->
-% 		{[], R1, [], A1}
-% 	end,
-%     {Rs, Accu2} = mapfoldl(F, Accu1, Tail),
-%     {Before ++ [Res| After ++ Rs], Accu2};
-% mapfoldl(F, Accu, []) when is_function(F, 2) -> {[], Accu}.
 
 
 
@@ -736,5 +718,6 @@ rpt_error(Reason, Fun, Info) ->
 
 -spec format_error({atom(), term()}) ->
     iolist().
+%% @hidden
 format_error({_Cat, Error}) ->
     Error.
