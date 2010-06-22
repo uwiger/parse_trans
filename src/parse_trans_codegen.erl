@@ -49,7 +49,9 @@ xform_fun(application, Form, _Ctxt, Acc) ->
 	    ClauseForms = parse_trans:revert(Clauses),
 	    io:fwrite("ClauseForms = ~p~n", [ClauseForms]),
 	    Arity = get_arity(ClauseForms),
-	    NewClauses = erl_parse:abstract(ClauseForms),
+	    Abstract = erl_parse:abstract(ClauseForms),
+	    io:fwrite("Abstract = ~p~n", [Abstract]),
+	    NewClauses = substitute(Abstract),
 	    NewForm = {tuple,1,[{atom,1,function},
 				NameF,
 				{integer,1, Arity},
@@ -61,6 +63,29 @@ xform_fun(application, Form, _Ctxt, Acc) ->
     end;
 xform_fun(_, Form, _Ctxt, Acc) ->
     {Form, Acc}.
+
+substitute({tuple,L0,[{atom,_,tuple},
+		      {integer,_,L},
+		      {cons,_,
+		       {tuple,_,[{atom,_,atom},{integer,_,_},{atom,_,'$var'}]},
+		       {cons,_,
+			{tuple,_,[{atom,_,var},{integer,_,_},{atom,_,V}]},
+			{nil,_}}}]}) ->
+    {call, L0, {remote,L0,{atom,L0,erl_parse},
+			   {atom,L0,abstract}},
+     [{var, L0, V}, {integer, L0, L}]};
+substitute([]) ->
+    [];
+substitute([H|T]) ->
+    [substitute(H) | substitute(T)];
+substitute(T) when is_tuple(T) ->
+    list_to_tuple(substitute(tuple_to_list(T)));
+substitute(X) ->
+    X.
+
+
+
+
 
 
 get_arity(Clauses) ->
