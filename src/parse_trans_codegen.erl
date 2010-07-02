@@ -53,6 +53,7 @@ xform_fun(application, Form, _Ctxt, Acc) ->
 	    io:fwrite("Abstract = ~p~n", [Abstract]),
 	    NewClauses = substitute(Abstract),
 	    NewForm = {tuple,1,[{atom,1,function},
+                                {integer, 1, erl_syntax:get_pos(Form)},
 				NameF,
 				{integer,1, Arity},
 				NewClauses]},
