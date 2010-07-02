@@ -72,17 +72,14 @@ xform_fun(application, Form, _Ctxt, Acc) ->
 		erl_syntax:application_arguments(Form),
 	    Clauses = erl_syntax:fun_expr_clauses(FunF),
 	    ClauseForms = parse_trans:revert(Clauses),
-	    io:fwrite("ClauseForms = ~p~n", [ClauseForms]),
 	    Arity = get_arity(ClauseForms),
 	    Abstract = erl_parse:abstract(ClauseForms),
-	    io:fwrite("Abstract = ~p~n", [Abstract]),
 	    NewClauses = substitute(Abstract),
 	    NewForm = {tuple,1,[{atom,1,function},
                                 {integer, 1, erl_syntax:get_pos(Form)},
 				NameF,
 				{integer,1, Arity},
 				NewClauses]},
-	    io:fwrite("NewForm = ~p~n", [NewForm]),
 	    {NewForm, Acc};
 	_ ->
 	    {Form, Acc}
@@ -116,7 +113,6 @@ substitute(X) ->
 
 get_arity(Clauses) ->
     Ays = [length(P) || {clause, _, P, _, _} <- Clauses],
-    io:fwrite("Ays = ~p~n", [Ays]),
     case lists:usort(Ays) of
 	[Ay] ->
 	    Ay;
