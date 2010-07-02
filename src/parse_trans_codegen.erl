@@ -34,6 +34,31 @@
 -export([parse_transform/2]).
 
 
+%% @spec (Forms, Options) -> NewForms
+%%
+%% @doc
+%% Searches for calls to `codegen:gen_function(Name, Fun)' and 
+%% substitutes the abstract code for a function with name `Name'
+%% and the same behaviour as `Fun'.
+%% 
+%% It is possible to do some limited expansion (importing a value
+%% bound at compile-time), using the construct <code>{'$var', V}</code>, where
+%% `V' is a bound variable in the scope of the call to `gen_function/2'.
+%%
+%% Example:
+%% <pre>
+%% gen(Name, X) ->
+%%    codegen:gen_function(Name, fun(L) -> lists:member({'$var',X}, L) end).
+%% </pre>
+%%
+%% After transformation, calling `gen(contains_17, 17)' will yield the 
+%% abstract form corresponding to:
+%% <pre>
+%% contains_17(L) ->
+%%    lists:member(17, L).
+%% </pre>
+%% @end
+%%
 parse_transform(Forms, Options) ->
     {NewForms, _} =
 	parse_trans:depth_first(fun xform_fun/4, [], Forms, Options),

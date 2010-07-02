@@ -2,7 +2,7 @@
 
 -compile({parse_transform, parse_trans_codegen}).
 
--export([f/1, g/2]).
+-export([f/1, g/2, gen/2]).
 
 
 f(Name) ->
@@ -23,3 +23,6 @@ g(Name, V) ->
 	      member({'$var',V}, L)
       end).
 
+
+gen(Name, X) ->
+    codegen:gen_function(Name, fun(L) -> lists:member({'$var',X}, L) end).
