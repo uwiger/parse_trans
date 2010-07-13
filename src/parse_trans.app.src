@@ -29,8 +29,7 @@
 %%% @end
 {application, parse_trans,
     [{description, "Parse transform library"},
-        {vsn, "@VSN@"},
-        {modules, [@MODULES@]},
+        {vsn, "0.1"},
         {registered, []},
         {applications, [kernel, stdlib, syntax_tools]},
   {env, []}
