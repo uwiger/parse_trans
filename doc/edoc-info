@@ -1,3 +1,3 @@
 {application,parse_trans}.
 {packages,[]}.
-{modules,[ct_expand,exprecs,parse_trans]}.
+{modules,[ct_expand,exprecs,parse_trans,parse_trans_codegen,parse_trans_pp]}.

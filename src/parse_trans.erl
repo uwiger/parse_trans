@@ -363,10 +363,11 @@ ext(forms) -> ".xforms".
 -spec pp_src(forms(), string()) ->
     ok.
 pp_src(Res, F) ->
-    Str = [io_lib:fwrite("~s~n",
-                         [lists:flatten([erl_pp:form(Fm) ||
-                                            Fm <- revert(Res)])])],
-    file:write_file(F, list_to_binary(Str)).
+    parse_trans_pp:pp_src(Res, F).
+%%     Str = [io_lib:fwrite("~s~n",
+%%                          [lists:flatten([erl_pp:form(Fm) ||
+%%                                             Fm <- revert(Res)])])],
+%%     file:write_file(F, list_to_binary(Str)).
 
 %% @spec (Beam::filename()) -> string() | {error, Reason}
 %%
@@ -374,13 +375,9 @@ pp_src(Res, F) ->
 %% Reads debug_info from the beam file Beam and returns a string containing
 %% the pretty-printed corresponding erlang source code.
 %% @end
+-spec pp_beam(filename:filename()) -> ok.
 pp_beam(Beam) ->
-    case pp_beam_to_str(Beam) of
-        {ok, Str} ->
-            io:put_chars(Str);
-        Other ->
-            Other
-    end.
+    parse_trans_pp:pp_beam(Beam).
 
 %% @spec (Beam::filename(), Out::filename()) -> ok | {error, Reason}
 %%
@@ -389,29 +386,9 @@ pp_beam(Beam) ->
 %% Erlang source code, storing it in the file Out.
 %% @end
 %%
+-spec pp_beam(filename:filename(), filename:filename()) -> ok.
 pp_beam(F, Out) ->
-    case pp_beam_to_str(F) of
-        {ok, Str} ->
-            file:write_file(Out, list_to_binary(Str));
-        Other ->
-            Other
-    end.
-
-pp_beam_to_str(F) ->
-    case beam_lib:chunks(F, [abstract_code]) of
-        {ok, {_, [{abstract_code,{_,AC}}]}} ->
-            {ok, lists:flatten(
-                   io_lib:fwrite("~s~n", [erl_prettypr:format(
-                                            erl_syntax:form_list(AC))])
-                  )};
-        Other ->
-            {error, Other}
-    end.
-
-%% pp_debug_info(Mod) when is_atom(Mod) ->
-%%     case code:which(Mod) of
-%%         F when is_list(F) ->
-%%             dialyzer_utils:
+    parse_trans_pp:pp_beam(F, Out).
 
 
 %%% @spec (File) -> Forms
