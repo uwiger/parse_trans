@@ -128,11 +128,8 @@ xform_fun(application, Form, _Ctxt, Acc) ->
 	    {erl_syntax:list(NewForms), Acc};
 	{codegen, {exprs, 1}} ->
 	    [FunF] = erl_syntax:application_arguments(Form),
-	    io:fwrite("FunF = ~p~n", [FunF]),
 	    [Clause] = erl_syntax:fun_expr_clauses(FunF),
-	    io:fwrite("Clause = ~p~n", [Clause]),
 	    [{clause,_,_,_,Body}] = parse_trans:revert([Clause]),
-	    io:fwrite("Body = ~p~n", [Body]),
 	    NewForm = substitute(erl_parse:abstract(Body)),
 	    {NewForm, Acc};
 	_ ->
