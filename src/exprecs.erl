@@ -137,6 +137,8 @@
                 versions = orddict:new(),
                 inserted = false}).
 
+-include("../include/codegen.hrl").
+
 -define(HERE, {?MODULE, ?LINE}).
 
 -define(ERROR(R, F, I),
@@ -196,6 +198,7 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
 	       {fname(info), 1},
 	       {fname(info), 2},
                {fname(pos), 2},
+	       {fname(isrec), 1},
 	       {fname(isrec), 2},
 	       {fname(get), 2},
 	       {fname(set), 2},
@@ -295,18 +298,14 @@ split_recnames(Rs) ->
               end
       end, orddict:new(), Rs).
 
-% pass(Forms, Fun, Acc) ->
-%     {NewTree, NewAcc} = transform(Forms, Fun, Acc),
-%     NewForms = [erl_syntax:revert(T) || T <- lists:flatten(NewTree)],
-%     {NewForms, NewAcc}.
-
 
 generate_accessors(L, Acc) ->
     [f_new_(Acc, L),
      f_info(Acc, L),
      f_info_2(Acc, L),
      f_pos_2(Acc, L),
-     f_isrec(Acc, L),
+     f_isrec_1(Acc, L),
+     f_isrec_2(Acc, L),
      f_get(Acc, L),
      f_set(Acc, L),
      f_fromlist(Acc, L) |
@@ -514,7 +513,7 @@ f_info(_Acc, L) ->
        [{call, L, {atom, L, Fname}, [{var, L, 'RecName'}, {atom, L, fields}]}]
       }]}.
 
-f_isrec(Acc, L) ->
+f_isrec_2(Acc, L) ->
     Fname = list_to_atom(fname_prefix(isrec)),
     Info = [{R,length(As)} || {R,As} <- Acc#pass1.records],
     {function, L, Fname, 2,
@@ -534,14 +533,6 @@ f_isrec(Acc, L) ->
      [{clause, L, [{var,L,'_'}, {var,L,'_'}], [],
        [{atom, L, false}]}]}.
 
-%%%    {function, L, Fname, 1,
-%%%     [{clause, L,
-%%%       [{var, L, 'Rec'}],
-%%%       [[{call, L,
-%%%	  {atom, L, is_record},
-%%%	  [{var, L, 'Rec'}, {atom, L, R}]}]],
-%%%       [{call, L, {atom, L, fname(info, R)}, [{atom, L, fields}]}]} ||
-%%%	 R <- Acc#pass1.exports]}.
 
 f_info_2(Acc, L) ->
     Fname = list_to_atom(fname_prefix(info)),
@@ -576,6 +567,21 @@ f_pos_2(Acc, L) ->
        [],
        [{call, L, {atom, L, fname(pos, R)}, [{var, L, 'Attr'}]}]} ||
 	 R <- Acc#pass1.exports]}.
+
+f_isrec_1(Acc, L) ->
+    Fname = list_to_atom(fname_prefix(isrec)),
+    {function, L, Fname, 1,
+     [{clause, L,
+       [{var, L, 'X'}],
+       [],
+       [{'if',L,
+	 [{clause, L, [], [[{call, L, {atom,L,is_record}, 
+			    [{var,L,'X'},{atom,L,R}]}]],
+	   [{atom,L,true}]} || R <- Acc#pass1.exports] ++
+	     [{clause,L, [], [[{atom,L,true}]],
+	       [{atom, L, false}]}]}]}
+     ]}.
+
 
 
 f_get(Acc, L) ->
