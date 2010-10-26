@@ -2,7 +2,7 @@
 
 -compile({parse_transform, parse_trans_codegen}).
 
--export([f/1, g/2, h/0, i/0, gen/2, fs/0]).
+-export([f/1, g/2, h/0, i/0, j/2, gen/2, fs/0]).
 
 
 f(Name) ->
@@ -39,6 +39,12 @@ i() ->
 			  end
 		  end).
 
+j(Name, Form) ->
+    codegen:gen_function(
+      Name,
+      fun(L) ->
+	      member({'$form',Form}, L)
+      end).
 
 gen(Name, X) ->
     codegen:gen_function(Name, fun(L) -> lists:member({'$var',X}, L) end).

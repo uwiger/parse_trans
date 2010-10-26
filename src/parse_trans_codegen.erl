@@ -95,6 +95,25 @@
 %% contains_17(L) ->
 %%    lists:member(17, L).
 %% </pre>
+%%
+%% <h2>Form substitution</h2>
+%%
+%% It is possible to inject abstract forms, using the construct
+%% <code>{'$form', F}</code>, where `F' is bound to a parsed form in
+%% the scope of the call to `gen_function/2'.
+%%
+%% Example:
+%% <pre>
+%% gen(Name, F) ->
+%%    codegen:gen_function(Name, fun(X) -> X =:= {'$form',F} end).
+%% </pre>
+%%
+%% After transformation, calling `gen(is_foo, {atom,0,foo})' will yield the
+%% abstract form corresponding to:
+%% <pre>
+%% is_foo(X) ->
+%%    X =:= foo.
+%% </pre>
 %% @end
 %%
 parse_transform(Forms, Options) ->
@@ -184,6 +203,14 @@ substitute({tuple,L0,[{atom,_,tuple},
     {call, L0, {remote,L0,{atom,L0,erl_parse},
 			   {atom,L0,abstract}},
      [{var, L0, V}, {integer, L0, L}]};
+substitute({tuple,L0,[{atom,_,tuple},
+		      {integer,_,_},
+		      {cons,_,
+		       {tuple,_,[{atom,_,atom},{integer,_,_},{atom,_,'$form'}]},
+		       {cons,_,
+			{tuple,_,[{atom,_,var},{integer,_,_},{atom,_,F}]},
+			{nil,_}}}]}) ->
+    {var, L0, F};
 substitute([]) ->
     [];
 substitute([H|T]) ->
