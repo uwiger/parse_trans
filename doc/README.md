@@ -1,24 +1,30 @@
 
 
-#The parse_trans application#
+<h1>The parse_trans application</h1>
+
 The parse_trans application
 ===========================
 A generic parse transform library
 This library is intended to simplify the task of writing parse transform
 modules for Erlang.
+
 __Authors:__ Ulf Wiger ([`ulf.wiger@erlang-consulting.com`](mailto:ulf.wiger@erlang-consulting.com)).
+
 A generic parse transform library
 This library is intended to simplify the task of writing parse transform
 modules for Erlang.
 
 
 
-#Introduction to parse transforms#
+<h1>Introduction to parse transforms</h1>
 
 
 
 
-##The simplest transform##
+
+<h2>The simplest transform</h2>
+
+
 
 
 
@@ -33,9 +39,10 @@ This will enlighten us as to what the forms actually look like.
 -export([parse_transform/2]).
 
 parse_transform(Forms, _Options) ->
-    io:fwrite("Forms = ~p~n", [Forms]),
-    Forms.
+io:fwrite("Forms = ~p~n", [Forms]),
+Forms.
 </pre>
+
 
 
 
@@ -47,7 +54,7 @@ Trying this with a very simple module:
 -export([add/2]).
 
 add(X,Y) ->
-    X + Y.
+X + Y.
 </pre>
 
 
@@ -55,21 +62,23 @@ add(X,Y) ->
 <pre>
 1> c(ex1, [{parse_transform,test_pt}]).
 Forms = [{attribute,1,file,{"./ex1.erl",1}},
-         {attribute,1,module,ex1},
-         {attribute,2,export,[{add,2}]},
-         {function,4,add,2,
-                   [{clause,4,
-                            [{var,4,'X'},{var,4,'Y'}],
-                            [],
-                            [{op,5,'+',{var,5,'X'},{var,5,'Y'}}]}]},
-         {eof,6}]
+{attribute,1,module,ex1},
+{attribute,2,export,[{add,2}]},
+{function,4,add,2,
+[{clause,4,
+[{var,4,'X'},{var,4,'Y'}],
+[],
+[{op,5,'+',{var,5,'X'},{var,5,'Y'}}]}]},
+{eof,6}]
 {ok,ex1}
 </pre>
 
 
 
 
-##`transform/4`##
+<h2>`transform/4`</h2>
+
+
 
 
 ...
@@ -77,13 +86,17 @@ Forms = [{attribute,1,file,{"./ex1.erl",1}},
 
 
 
-#Current limitations#
+<h1>Current limitations</h1>
+
+
 
 
 ...
 
 
-##Modules##
+<h2 class="indextitle">Modules</h2>
+
+
 
 <table width="100%" border="0" summary="list of modules">
 <tr><td><a href="ct_expand.md" class="module">ct_expand</a></td></tr>
@@ -91,3 +104,4 @@ Forms = [{attribute,1,file,{"./ex1.erl",1}},
 <tr><td><a href="parse_trans.md" class="module">parse_trans</a></td></tr>
 <tr><td><a href="parse_trans_codegen.md" class="module">parse_trans_codegen</a></td></tr>
 <tr><td><a href="parse_trans_pp.md" class="module">parse_trans_pp</a></td></tr></table>
+
