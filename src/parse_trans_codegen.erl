@@ -193,23 +193,25 @@ abstract_clauses(ClauseForms) ->
     
 
 
-substitute({tuple,L0,[{atom,_,tuple},
-		      {integer,_,L},
-		      {cons,_,
-		       {tuple,_,[{atom,_,atom},{integer,_,_},{atom,_,'$var'}]},
-		       {cons,_,
-			{tuple,_,[{atom,_,var},{integer,_,_},{atom,_,V}]},
-			{nil,_}}}]}) ->
+substitute({tuple,L0,
+	    [{atom,_,tuple},
+	     {integer,_,L},
+	     {cons,_,
+	      {tuple,_,[{atom,_,atom},{integer,_,_},{atom,_,'$var'}]},
+	      {cons,_,
+	       {tuple,_,[{atom,_,var},{integer,_,_},{atom,_,V}]},
+	       {nil,_}}}]}) ->
     {call, L0, {remote,L0,{atom,L0,erl_parse},
-			   {atom,L0,abstract}},
+		{atom,L0,abstract}},
      [{var, L0, V}, {integer, L0, L}]};
-substitute({tuple,L0,[{atom,_,tuple},
-		      {integer,_,_},
-		      {cons,_,
-		       {tuple,_,[{atom,_,atom},{integer,_,_},{atom,_,'$form'}]},
-		       {cons,_,
-			{tuple,_,[{atom,_,var},{integer,_,_},{atom,_,F}]},
-			{nil,_}}}]}) ->
+substitute({tuple,L0,
+	    [{atom,_,tuple},
+	     {integer,_,_},
+	     {cons,_,
+	      {tuple,_,[{atom,_,atom},{integer,_,_},{atom,_,'$form'}]},
+	      {cons,_,
+	       {tuple,_,[{atom,_,var},{integer,_,_},{atom,_,F}]},
+	       {nil,_}}}]}) ->
     {var, L0, F};
 substitute([]) ->
     [];
