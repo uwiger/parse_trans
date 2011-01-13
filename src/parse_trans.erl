@@ -89,18 +89,22 @@
 -define(ERROR(R, F, I),
         begin
             rpt_error(R, F, I),
-            
             throw({error,get_pos(I),{unknown,R}})
         end).
 
-%% Typer typedefs
+-export_type([forms/0]).
+
+%% Typedefs
 -type form()    :: any().
 -type forms()   :: [form()].
 -type options() :: [{atom(), any()}].
 -type type()    :: atom().
--type xform_f() :: fun((type(), form(), #context{}, Acc) ->
-                              {form(), boolean(), Acc}
-                                  | {forms(), form(), forms(), boolean(), Acc}).
+-type xform_f_rec() :: fun((type(), form(), #context{}, Acc) ->
+				  {form(), boolean(), Acc}
+				      | {forms(), form(), forms(), boolean(), Acc}).
+-type xform_f_df() :: fun((type(), form(), #context{}, Acc) ->
+				 {form(), Acc}
+				     | {forms(), form(), forms(), Acc}).
 -type insp_f()  :: fun((type(), form(), #context{}, A) -> {boolean(), A}).
                               
 
@@ -168,7 +172,8 @@ get_module(Forms) ->
 %%% @end
 %%%
 -spec get_attribute(atom(), [any()]) ->
-    false | list().
+			   'none' | [erl_syntax:syntaxTree()].
+%%
 get_attribute(A, Forms) ->
     case find_attribute(A, Forms) of
         false ->
@@ -229,12 +234,12 @@ initial_context(Forms, Options) ->
 %%% @doc
 %%% Makes one pass
 %%% @end
--spec transform(xform_f(), Acc, forms(), options()) ->
+-spec transform(xform_f_rec(), Acc, forms(), options()) ->
     {forms(), Acc} | {error, list()}.
 transform(Fun, Acc, Forms, Options) when is_function(Fun, 4) ->
     do(fun do_transform/4, Fun, Acc, Forms, Options).
 
--spec depth_first(xform_f(), Acc, forms(), options()) ->
+-spec depth_first(xform_f_df(), Acc, forms(), options()) ->
     {forms(), Acc} | {error, list()}.
 depth_first(Fun, Acc, Forms, Options) when is_function(Fun, 4) ->
     do(fun do_depth_first/4, Fun, Acc, Forms, Options).
@@ -306,9 +311,9 @@ optionally_pretty_print(Result, Options, Context) ->
     if DoLFs ->
 	    Out1 = outfile(File, forms),
 	    {ok,Fd} = file:open(Out1, [write]),
-	    try [io:fwrite(Fd, "~p.~n", [F]) || F <- Result]
+	    try lists:foreach(fun(F) -> io:fwrite(Fd, "~p.~n", [F]) end, Result)
 	    after
-		file:close(Fd)
+		ok = file:close(Fd)
 	    end;
        true -> ok
     end,
@@ -369,13 +374,13 @@ pp_src(Res, F) ->
 %%                                             Fm <- revert(Res)])])],
 %%     file:write_file(F, list_to_binary(Str)).
 
-%% @spec (Beam::filename()) -> string() | {error, Reason}
+%% @spec (Beam::file:filename()) -> string() | {error, Reason}
 %%
 %% @doc
 %% Reads debug_info from the beam file Beam and returns a string containing
 %% the pretty-printed corresponding erlang source code.
 %% @end
--spec pp_beam(filename:filename()) -> ok.
+-spec pp_beam(file:filename()) -> ok.
 pp_beam(Beam) ->
     parse_trans_pp:pp_beam(Beam).
 
@@ -402,8 +407,6 @@ pp_beam(F, Out) ->
 %%%
 -spec get_orig_syntax_tree(string()) ->
     forms().
-get_orig_syntax_tree(undefined) ->
-    ?ERROR(unknown_source_file, ?HERE, []);
 get_orig_syntax_tree(File) ->
     case epp_dodger:parse_file(File) of
         {ok, Forms} ->
@@ -473,7 +476,7 @@ recurse(Form, Else, F) ->
             F(ListOfLists)
     end.
 
--spec do_transform(xform_f(), term(), forms(), #context{}) ->
+-spec do_transform(xform_f_rec(), term(), forms(), #context{}) ->
     {forms(), term()}.
 do_transform(F, Acc, Forms, Context) ->
     Rec = fun do_transform/4, % this function
@@ -491,7 +494,7 @@ do_transform(F, Acc, Forms, Context) ->
 	end,
     mapfoldl(F1, Acc, Forms).
 
--spec do_depth_first(xform_f(), term(), forms(), #context{}) ->
+-spec do_depth_first(xform_f_df(), term(), forms(), #context{}) ->
     {forms(), term()}.
 do_depth_first(F, Acc, Forms, Context) ->
     Rec = fun do_depth_first/4,  % this function
