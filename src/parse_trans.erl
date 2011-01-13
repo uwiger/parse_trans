@@ -391,7 +391,7 @@ pp_beam(Beam) ->
 %% Erlang source code, storing it in the file Out.
 %% @end
 %%
--spec pp_beam(filename:filename(), filename:filename()) -> ok.
+-spec pp_beam(file:filename(), file:filename()) -> ok.
 pp_beam(F, Out) ->
     parse_trans_pp:pp_beam(F, Out).
 
