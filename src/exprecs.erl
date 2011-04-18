@@ -323,7 +323,7 @@ generate_accessors(L, Acc) ->
 	 end, Acc#pass1.exports))] ++ version_accessors(L, Acc).
 
 get_flds(Rname, #pass1{records = Rs}) ->
-    {value, {_, Flds}} = lists:keysearch(Rname, 1, Rs),
+    {_, Flds} = lists:keyfind(Rname, 1, Rs),
     lists:map(
       fun({record_field,_, {atom,_,N}}) -> N;
 	 ({record_field,_, {atom,_,N}, _}) -> N

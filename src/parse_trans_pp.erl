@@ -60,7 +60,7 @@ main([F]) ->
 %%
 %% @doc Pretty-prints the erlang source code corresponding to Forms into Out
 %%
--spec pp_src(parse_trans:forms(), filename:filename()) ->
+-spec pp_src(parse_trans:forms(), file:filename()) ->
     ok.
 pp_src(Res, F) ->
     Str = [io_lib:fwrite("~s~n",
@@ -74,7 +74,7 @@ pp_src(Res, F) ->
 %% Reads debug_info from the beam file Beam and returns a string containing
 %% the pretty-printed corresponding erlang source code.
 %% @end
--spec pp_beam(filename:filename()) -> ok | {error, any()}.
+-spec pp_beam(file:filename()) -> ok | {error, any()}.
 pp_beam(Beam) ->
     case pp_beam_to_str(Beam) of
         {ok, Str} ->
@@ -90,7 +90,7 @@ pp_beam(Beam) ->
 %% Erlang source code, storing it in the file Out.
 %% @end
 %%
--spec pp_beam(filename:filename(), filename:filename()) -> ok | {error,any()}.
+-spec pp_beam(file:filename(), file:filename()) -> ok | {error,any()}.
 pp_beam(F, Out) ->
     case pp_beam_to_str(F) of
         {ok, Str} ->
