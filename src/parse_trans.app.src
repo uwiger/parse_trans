@@ -29,7 +29,7 @@
 %%% @end
 {application, parse_trans,
     [{description, "Parse transform library"},
-        {vsn, "0.1"},
+        {vsn, "0.2"},
         {registered, []},
         {applications, [kernel, stdlib, syntax_tools]},
   {env, []}
