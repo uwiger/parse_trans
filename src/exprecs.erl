@@ -21,23 +21,23 @@
 %% File    : exprecs.erl
 %% @author  : Ulf Wiger <ulf.wiger@ericsson.com>
 %% @end
-%% Description : 
+%% Description :
 %%
 %% Created : 13 Feb 2006 by Ulf Wiger <ulf.wiger@ericsson.com>
 %% Rewritten: Jan-Feb 2010 by Ulf Wiger <ulf.wiger@elang-solutions.com>
 %%-------------------------------------------------------------------
 
 %% @doc Parse transform for generating record access functions.
-%% <p>This parse transform can be used to reduce compile-time 
+%% <p>This parse transform can be used to reduce compile-time
 %% dependencies in large systems.</p>
 %% <p>In the old days, before records, Erlang programmers often wrote
 %% access functions for tuple data. This was tedious and error-prone.
 %% The record syntax made this easier, but since records were implemented
-%% fully in the pre-processor, a nasty compile-time dependency was 
+%% fully in the pre-processor, a nasty compile-time dependency was
 %% introduced.</p>
-%% <p>This module automates the generation of access functions for 
-%% records. While this method cannot fully replace the utility of 
-%% pattern matching, it does allow a fair bit of functionality on 
+%% <p>This module automates the generation of access functions for
+%% records. While this method cannot fully replace the utility of
+%% pattern matching, it does allow a fair bit of functionality on
 %% records without the need for compile-time dependencies.</p>
 %% <p>Whenever record definitions need to be exported from a module,
 %% inserting a compiler attribute,
@@ -144,7 +144,6 @@
 -define(ERROR(R, F, I),
         begin
             rpt_error(R, F, I),
-            
             throw({error,get_pos(I),{unknown,R}})
         end).
 
@@ -515,7 +514,7 @@ f_info(_Acc, L) ->
 
 f_isrec_2(Acc, L) ->
     Fname = list_to_atom(fname_prefix(isrec)),
-    Info = [{R,length(As)} || {R,As} <- Acc#pass1.records],
+    Info = [{R,length(As) + 1} || {R,As} <- Acc#pass1.records],
     {function, L, Fname, 2,
      lists:map(
        fun({R, Ln}) ->
@@ -575,7 +574,7 @@ f_isrec_1(Acc, L) ->
        [{var, L, 'X'}],
        [],
        [{'if',L,
-	 [{clause, L, [], [[{call, L, {atom,L,is_record}, 
+	 [{clause, L, [], [[{call, L, {atom,L,is_record},
 			    [{var,L,'X'},{atom,L,R}]}]],
 	   [{atom,L,true}]} || R <- Acc#pass1.exports] ++
 	     [{clause,L, [], [[{atom,L,true}]],
