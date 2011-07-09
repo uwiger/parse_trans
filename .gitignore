@@ -1,3 +1,5 @@
-examples/*.beam
-examples/*.xf*
-.eunit
+*~
+*.dump
+*.beam
+ebin/
+deps/
