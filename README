@@ -1,0 +1,2 @@
+This package contains some helper tools for dealing with parse_transform and erl_syntax.
+One can use an example scripts in examples/ directory as an addition to documentation in doc/.
