@@ -38,6 +38,7 @@
 
 transform_module(Mod, PT, Options) ->
     Forms = abstract_code(beam_file(Mod)),
+    Context = parse_trans:initial_context(Forms, Options),
     PTMods = if is_atom(PT) -> [PT];
 		is_function(PT, 2) -> [PT];
 		is_list(PT) -> PT
@@ -47,6 +48,7 @@ transform_module(Mod, PT, Options) ->
 				 (PTMod, Fs) ->
 				      PTMod:parse_transform(Fs, Options)
 			      end, Forms, PTMods),
+    parse_trans:optionally_pretty_print(Transformed, Options, Context),
     compile_and_load_forms(Transformed, Options).
 
 

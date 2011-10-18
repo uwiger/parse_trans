@@ -8,7 +8,7 @@ ex1() ->
       ex1, [fun(Fs, _Os) ->
 		    parse_trans:export_function(int, 0, Fs)
 	    end,
-	    fun transform_ex1/2], []).
+	    fun transform_ex1/2], [{pt_pp_src,true}]).
 
 transform_ex1(Forms, _Opts) ->
     NewF = codegen:gen_function(add, fun(A, B) ->
