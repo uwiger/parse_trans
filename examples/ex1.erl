@@ -3,3 +3,6 @@
 
 add(X,Y) ->
     X + Y.
+
+int() ->
+    int.

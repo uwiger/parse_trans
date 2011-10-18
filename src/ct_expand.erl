@@ -20,17 +20,17 @@
 %% File    : ct_expand.erl
 %% @author  : Ulf Wiger <ulf.wiger@erlang-solutions.com>
 %% @end
-%% Description : 
+%% Description :
 %%
 %% Created : 7 Apr 2010 by Ulf Wiger <ulf.wiger@erlang-solutions.com>
 %%-------------------------------------------------------------------
 
 %% @doc Compile-time expansion utility
-%% 
+%%
 %% This module serves as an example of parse_trans-based transforms,
 %% but might also be a useful utility in its own right.
-%% The transform searches for calls to the pseudo-function 
-%% `ct_expand:term(Expr)', and then replaces the call site with the 
+%% The transform searches for calls to the pseudo-function
+%% `ct_expand:term(Expr)', and then replaces the call site with the
 %% result of evaluating `Expr' at compile-time.
 %%
 %% For example, the line
@@ -51,7 +51,7 @@
 -spec parse_transform(forms(), options()) ->
     forms().
 parse_transform(Forms, Options) ->
-    {NewForms,_} = 
+    {NewForms,_} =
         parse_trans:depth_first(fun xform_fun/4, [], Forms, Options),
     parse_trans:revert(NewForms).
 
@@ -75,4 +75,4 @@ xform_fun(application, Form, _Ctxt, Acc) ->
     end;
 xform_fun(_, Form, _Ctxt, Acc) ->
     {Form, Acc}.
-  
+
