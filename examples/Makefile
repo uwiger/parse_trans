@@ -12,7 +12,7 @@ test: $(APPLICATION) $(TEST_BEAMS) ../util/run_test.beam
 
 %.beam: %.erl $(HEADERS) 
 	@echo Compiling $<
-	@erlc +debug_info -pa ../ebin -pa . $<
+	@erlc +debug_info -pa ../ebin -pa . -I ../include $<
 
 test.beam: test_pt.beam
 

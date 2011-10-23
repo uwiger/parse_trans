@@ -293,11 +293,12 @@ replace_function(F, Arity, NewForm, Forms) ->
 		  end;
 	     (_, Form, _Ctxt, Acc) ->
 		  {Form, false, Acc}
-	  end, false, Forms, false),
+	  end, false, Forms, initial_context(Forms, [])),
     revert(NewForms).
 
 export_function(F, Arity, Forms) ->
-    do_insert_forms(above, [{attribute, 1, export, [{F, Arity}]}], Forms, false).
+    do_insert_forms(above, [{attribute, 1, export, [{F, Arity}]}], Forms,
+		    initial_context(Forms, [])).
 
 -spec do_insert_forms(above | below, forms(), forms(), #context{}) ->
     forms().

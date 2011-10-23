@@ -1,9 +1,6 @@
-Module parse_trans_codegen
-==========================
 
 
-<h1>Module parse_trans_codegen</h1>
-
+#Module parse_trans_codegen#
 * [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)
@@ -13,19 +10,17 @@ Parse transform for code generation pseduo functions.
 
 
 
-__Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-solutions.com`](mailto:ulf.wiger@erlang-solutions.com)).
+__Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-solutions.com`](mailto:ulf.wiger@erlang-solutions.com)).<a name="description"></a>
 
-<h2><a name="description">Description</a></h2>
-
+##Description##
 
 
 
 
 ...
+<a name="index"></a>
 
-
-<h2><a name="index">Function Index</a></h2>
-
+##Function Index##
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#parse_transform-2">parse_transform/2</a></td><td>
@@ -34,20 +29,18 @@ and converts the corresponding erlang code to a data structure
 representing the abstract form of that code.</td></tr></table>
 
 
+<a name="functions"></a>
 
-
-<h2><a name="functions">Function Details</a></h2>
-
+##Function Details##
 
 <a name="parse_transform-2"></a>
 
-<h3>parse_transform/2</h3>
+###parse_transform/2##
 
 
 
 
-
-<pre>parse_transform(Forms, Options) -> NewForms</pre>
+<pre>parse_transform(Forms, Options) -&gt; NewForms</pre>
 <br></br>
 
 
@@ -73,8 +66,7 @@ Supported functions:
 
 
 
-<h2>gen_function/2</h2>
-
+##gen_function/2##
 
 
 
@@ -96,8 +88,7 @@ so that the generated function has the name `Name`.
 
 
 
-<h2>gen_functions/1</h2>
-
+##gen_functions/1##
 
 
 
@@ -108,8 +99,7 @@ data objects, just as if one had written
 
 
 
-<h2>exprs/1</h2>
-
+##exprs/1##
 
 
 
@@ -126,8 +116,7 @@ used to ensure that all necessary variables are known to the compiler.
 
 
 
-<h2>Variable substitution</h2>
-
+##Variable substitution##
 
 
 
@@ -151,8 +140,7 @@ abstract form corresponding to:
 
 
 
-<h2>Form substitution</h2>
-
+##Form substitution##
 
 
 

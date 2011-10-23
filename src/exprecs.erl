@@ -47,13 +47,17 @@
 %% <pre>
 %% -module(test_exprecs).
 %%
-%% -record(r, {a, b, c}).
+%% -record(r, {a = 0 :: integer(),
+%%             b = 0 :: integer(),
+%%             c = 0 :: integer()}).
 %% -export_records([r]).
 %%
 %% -export(['#new-'/1, '#info-'/1, '#info-'/2, '#pos-'/2,
 %%          '#is_record-'/2, '#get-'/2, '#set-'/2, '#fromlist-'/2,
 %%          '#new-r'/0, '#new-r'/1, '#get-r'/2, '#set-r'/2,
-%%          '#pos-r'/1, '#fromlist-r'/2, '#info-r'/1]).
+%%          '#pos-r'/1, '#fromlist-r'/1, '#fromlist-r'/2, '#info-r'/1]).
+%%
+%% -type '#prop-r'() :: {a, integer()} | {b, integer()} | {c, integer()}.
 %%
 %% '#new-'(r) -&gt; '#new-r'().
 %%
@@ -74,6 +78,11 @@
 %% '#set-'(Vals, Rec) when is_record(Rec, r) -&gt;
 %%     '#set-r'(Vals, Rec).
 %%
+%% -spec '#fromlist-r'(['#prop-r'()]) -> #r{}.
+%% '#fromlist-r'(Vals) when is_list(Vals) ->
+%%     '#fromlist-r'(Vals, '#new-r'()).
+%%
+%% -spec '#fromlist-r'(['#prop-r'()], #r{}) -> #r{}.
 %% '#fromlist-'(Vals, Rec) when is_record(Rec, r) -&gt;
 %%     '#fromlist-r'(Vals, Rec).
 %%
@@ -89,6 +98,7 @@
 %% '#get-r'(Attr, R) -&gt;
 %%     erlang:error(bad_record_op, ['#get-r', Attr, R]).
 %%
+%% -spec '#set-r'(['#prop-r'()], #r{}) -&gt; #r{}.
 %% '#set-r'(Vals, Rec) -&gt;
 %%     F = fun ([], R, _F1) -&gt; R;
 %%             ([{a, V} | T], R, F1) -&gt; F1(T, R#r{a = V}, F1);
@@ -110,6 +120,7 @@
 %%         end,
 %%     F(AttrNames, Rec, F).
 %%
+%% -spec '#pos-r'('#attr-r'()) -&gt; integer().
 %% '#pos-r'(a) -&gt; 2;
 %% '#pos-r'(b) -&gt; 3;
 %% '#pos-r'(c) -&gt; 4;
@@ -134,6 +145,7 @@
 -record(pass1, {exports = [],
 		generated = false,
 		records = [],
+		record_types = [],
                 versions = orddict:new(),
                 inserted = false}).
 
@@ -166,14 +178,11 @@ parse_transform(Forms, Options) ->
     parse_trans:top(fun do_transform/2, Forms, Options).
 
 do_transform(Forms, Context) ->
-%%    io:fwrite("in do_transform/2~n", []),
     Acc1 = versioned_records(
 	     parse_trans:do_inspect(fun inspect_f/4, #pass1{}, Forms, Context)),
-%%    io:fwrite("Acc1 = ~p~n", [Acc1]),
     {Forms2, Acc2} =
 	parse_trans:do_transform(fun generate_f/4, Acc1, Forms, Context),
     parse_trans:revert(verify_generated(Forms2, Acc2, Context)).
-
 
 inspect_f(attribute, {attribute,_L,record,RecDef}, _Ctxt, Acc) ->
     Recs0 = Acc#pass1.records,
@@ -182,6 +191,15 @@ inspect_f(attribute, {attribute,_L,export_records, E}, _Ctxt, Acc) ->
     Exports0 = Acc#pass1.exports,
     NewExports = Exports0 ++ E,
     {false, Acc#pass1{exports = NewExports}};
+inspect_f(attribute, {attribute, _L, type,
+		      {{record, R}, RType,_}}, _Ctxt, Acc) ->
+    Type = lists:map(
+	     fun({typed_record_field, {record_field,_,{atom,_,A}}, T}) ->
+		     {A, T};
+		({typed_record_field, {record_field,_,{atom,_,A},_}, T}) ->
+		     {A, T}
+	     end, RType),
+    {false, Acc#pass1{record_types = [{R, Type}|Acc#pass1.record_types]}};
 inspect_f(_Type, _Form, _Context, Acc) ->
     {false, Acc}.
 
@@ -193,7 +211,8 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
 	{error, Bad} ->
 	    ?ERROR(invalid_record_exports, ?HERE, Bad)
     end,
-    Exports = [{fname(new), 1},
+    Exports = [{'#exported-records', 0},
+	       {fname(new), 1},
 	       {fname(info), 1},
 	       {fname(info), 2},
                {fname(pos), 2},
@@ -209,19 +228,22 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
 			 [{FNew, 0}, {FNew,1},
 			  {fname(get, RecS), 2},
 			  {fname(set, RecS), 2},
-                          {fname(pos, RecS), 1},
+			  {fname(pos, RecS), 1},
+			  {fname(fromlist, RecS), 1},
 			  {fname(fromlist, RecS), 2},
 			  {fname(info, RecS), 1}]
 		 end, Es)] ++ version_exports(Vsns),
     {[], Form,
      [{attribute,L,export,Exports}],
      false, Acc#pass1{inserted = true}};
-generate_f(function, Form, _Context, #pass1{exports = [_|_],
+generate_f(function, Form, _Context, #pass1{exports = [_|_] = Es,
+					    record_types = Ts,
 					    generated = false} = Acc) ->
     % Layout record funs before first function
     L = erl_syntax:get_pos(Form),
+    Specs = generate_specs(L, [{R,T} || {R,T} <- Ts, lists:member(R, Es)]),
     Funs = generate_accessors(L, Acc),
-    {Funs, Form, [], false, Acc#pass1{generated = true}};
+    {Specs ++ Funs, Form, [], false, Acc#pass1{generated = true}};
 generate_f(_Type, Form, _Ctxt, Acc) ->
     {Form, false, Acc}.
 
@@ -232,7 +254,7 @@ verify_generated(Forms, #pass1{} = Acc, _Context) ->
 	false ->
 	    % should be re-written to use the parse_trans helper...?
 	    [{eof,Last}|RevForms] = lists:reverse(Forms),
-	    [{function, NewLast, _, _, _}|_] = RevAs = 
+	    [{function, NewLast, _, _, _}|_] = RevAs =
 		lists:reverse(generate_accessors(Last, Acc)),
 	    lists:reverse([{eof, NewLast+1} | RevAs] ++ RevForms)
     end.
@@ -248,7 +270,6 @@ check_record_names(Es, L, #pass1{records = Rs}) ->
     end.
 
 versioned_records(#pass1{exports = Es, records = Rs} = Pass1) ->
-%%    io:fwrite("versioned_records/1~n", []),
     case split_recnames(Rs) of
         [] ->
             Pass1#pass1{versions = []};
@@ -297,29 +318,44 @@ split_recnames(Rs) ->
               end
       end, orddict:new(), Rs).
 
+generate_specs(L, Specs) ->
+    [[
+      {attribute, L, type,
+      {fname(prop, R),
+       {type, L, union,
+	[{type, L, tuple, [{atom,L,A},T]} || {A,T} <- Attrs]}, []}},
+      {attribute, L, type,
+       {fname(attr, R),
+	{type, L, union,
+	 [{atom, L, A} || {A,_} <- Attrs]}, []}}
+     ] || {R, Attrs} <- Specs].
+
 
 generate_accessors(L, Acc) ->
-    [f_new_(Acc, L),
-     f_info(Acc, L),
-     f_info_2(Acc, L),
-     f_pos_2(Acc, L),
-     f_isrec_1(Acc, L),
-     f_isrec_2(Acc, L),
-     f_get(Acc, L),
-     f_set(Acc, L),
-     f_fromlist(Acc, L) |
-     lists:concat(
-       lists:map(
-	 fun(Rname) ->
-		 Fields = get_flds(Rname, Acc),
-		 [f_new_0(Rname, L),
-		  f_new_1(Rname, L),
-		  f_get_2(Rname, Fields, L),
-		  f_set_2(Rname, Fields, L),
-		  f_fromlist_2(Rname, Fields, L),
-                  f_pos_1(Rname, Fields, L),
-		  f_info_1(Rname, L)]
-	 end, Acc#pass1.exports))] ++ version_accessors(L, Acc).
+    lists:flatten(
+      [f_exported_recs(Acc, L),
+       f_new_(Acc, L),
+       f_info(Acc, L),
+       f_info_2(Acc, L),
+       f_pos_2(Acc, L),
+       f_isrec_1(Acc, L),
+       f_isrec_2(Acc, L),
+       f_get(Acc, L),
+       f_set(Acc, L),
+       f_fromlist(Acc, L) |
+       lists:concat(
+	 lists:map(
+	   fun(Rname) ->
+		   Fields = get_flds(Rname, Acc),
+		   [f_new_0(Rname, L),
+		    f_new_1(Rname, L),
+		    f_get_2(Rname, Fields, L),
+		    f_set_2(Rname, Fields, L),
+		    f_fromlist_1(Rname, L),
+		    f_fromlist_2(Rname, Fields, L),
+		    f_pos_1(Rname, Fields, L),
+		    f_info_1(Rname, L)]
+	   end, Acc#pass1.exports))] ++ version_accessors(L, Acc)).
 
 get_flds(Rname, #pass1{records = Rs}) ->
     {_, Flds} = lists:keyfind(Rname, 1, Rs),
@@ -339,7 +375,9 @@ fname_prefix(Op) ->
 	info     -> "#info-";
         pos      -> "#pos-";
 	isrec    -> "#is_record-";
-        convert  -> "#convert-"
+        convert  -> "#convert-";
+	prop     -> "#prop-";
+	attr     -> "#attr-"
     end.
 
 fname_prefix(Op, Rname) ->
@@ -360,6 +398,14 @@ fname(Op, Rname) ->
 fname(Op, Rname, V) ->
     list_to_atom(fname_prefix(Op, Rname) ++ "__" ++ V).
 
+
+%%% Meta functions
+
+f_exported_recs(#pass1{exports = Es}, L) ->
+    {function, L, '#exported-records', 0,
+     [{clause, L, [], [],
+       [erl_parse:abstract(Es, L)]}]}.
+
 %%% Accessor functions
 %%%
 f_new_(#pass1{exports = Es}, L) ->
@@ -369,53 +415,82 @@ f_new_(#pass1{exports = Es}, L) ->
       || Re <- Es]}.
 
 f_new_0(Rname, L) ->
-    {function, L, fname(new, Rname), 0,
-     [{clause, L, [], [],
-       [{record, L, Rname, []}]}]}.
+    Fname = fname(new, Rname),
+    [{attribute, L, spec,
+      {{Fname, 0},
+       [{type, L, 'fun',
+	 [{type, L, product, []}, {type, L, record, [{atom, L, Rname}]}]}]}},
+     {function, L, fname(new, Rname), 0,
+      [{clause, L, [], [],
+	[{record, L, Rname, []}]}]}].
 
 
 f_new_1(Rname, L) ->
-    {function, L, fname(new, Rname), 1,
+    Fname = fname(new, Rname),
+    [funspec(L, Fname, [t_list(L, [t_prop(L, Rname)])],
+	     t_record(L, Rname)),
+    {function, L, Fname, 1,
      [{clause, L, [{var, L, 'Vals'}], [],
        [{call, L, {atom, L, fname(set, Rname)},
 	 [{var, L, 'Vals'},
 	  {record, L, Rname, []}
 	 ]}]
-       }]}.
+       }]}].
+
+funspec(L, Fname, Head, Returns) ->
+    Arity = length(Head),
+    {attribute, L, spec,
+     {{Fname, Arity},
+      [{type, L, 'fun',
+	[{type, L, product, Head}, Returns]}]}}.
+
+
+t_prop(L, Rname) -> {type, L, fname(prop, Rname), []}.
+t_attr(L, Rname) -> {type, L, fname(attr, Rname), []}.
+t_union(L, Alt)  -> {type, L, union, Alt}.
+%% t_any(L) -> {type, L, any, []}.
+t_atom(L) -> {type, L, atom, []}.
+t_integer(L) -> {type, L, integer, []}.
+t_list(L, Es) -> {type, L, list, Es}.
+%% t_tuple(L, Es) -> {type, L, tuple, Es}.
+t_record(L, A) -> {type, L, record, [{atom, L, A}]}.
 
 f_set_2(Rname, Flds, L) ->
     Fname = fname(set, Rname),
-    {function, L, Fname, 2,
-     [{clause, L, [{var, L, 'Vals'}, {var, L, 'Rec'}], [],
-       [{match, L, {var, L, 'F'},
-	 {'fun', L, 
-	  {clauses, 
-	   [{clause, L, [{nil,L},
-			 {var,L,'R'},
-			 {var,L,'_F1'}],
-	     [],
-	     [{var, L, 'R'}]} |
-	    [{clause, L, 
-	      [{cons, L, {tuple, L, [{atom, L, Attr},
-				     {var,  L, 'V'}]},
-		{var, L, 'T'}},
-	       {var, L, 'R'},
-	       {var, L, 'F1'}],
+    TRec = t_record(L, Rname),
+    [funspec(L, Fname, [t_list(L, [t_prop(L, Rname)]), TRec],
+	     TRec),
+     {function, L, Fname, 2,
+      [{clause, L, [{var, L, 'Vals'}, {var, L, 'Rec'}], [],
+	[{match, L, {var, L, 'F'},
+	  {'fun', L,
+	   {clauses,
+	    [{clause, L, [{nil,L},
+			  {var,L,'R'},
+			  {var,L,'_F1'}],
 	      [],
-	      [{call, L, {var, L, 'F1'},
-		[{var,L,'T'},
-		 {record, L, {var,L,'R'}, Rname,
-		  [{record_field, L,
-		    {atom, L, Attr},
-		    {var, L, 'V'}}]},
-		 {var, L, 'F1'}]}]} || Attr <- Flds]
-	    ++ [{clause, L, [{var, L, 'Vs'}, {var,L,'R'},{var,L,'_'}],
-		 [],
-		 [bad_record_op(L, Fname, 'Vs', 'R')]}]
+	      [{var, L, 'R'}]} |
+	     [{clause, L,
+	       [{cons, L, {tuple, L, [{atom, L, Attr},
+				      {var,  L, 'V'}]},
+		 {var, L, 'T'}},
+		{var, L, 'R'},
+		{var, L, 'F1'}],
+	       [[{call, L, {atom, L, is_list}, [{var, L, 'T'}]}]],
+	       [{call, L, {var, L, 'F1'},
+		 [{var,L,'T'},
+		  {record, L, {var,L,'R'}, Rname,
+		   [{record_field, L,
+		     {atom, L, Attr},
+		     {var, L, 'V'}}]},
+		  {var, L, 'F1'}]}]} || Attr <- Flds]
+	     ++ [{clause, L, [{var, L, 'Vs'}, {var,L,'R'},{var,L,'_'}],
+		  [],
+		  [bad_record_op(L, Fname, 'Vs', 'R')]}]
 	    ]}}},
-	{call, L, {var, L, 'F'}, [{var, L, 'Vals'},
-				  {var, L, 'Rec'},
-				  {var, L, 'F'}]}]}]}.
+	 {call, L, {var, L, 'F'}, [{var, L, 'Vals'},
+				   {var, L, 'Rec'},
+				   {var, L, 'F'}]}]}]}].
 
 bad_record_op(L, Fname, Val, R) ->
     {call, L, {remote, L, {atom,L,erlang}, {atom,L,error}},
@@ -423,64 +498,85 @@ bad_record_op(L, Fname, Val, R) ->
 			       {cons, L, {var, L, Val},
 				{cons, L, {var, L, R},
 				 {nil, L}}}}]}.
-    
 
 
 f_pos_1(Rname, Flds, L) ->
     Fname = fname(pos, Rname),
     FieldList = lists:zip(Flds, lists:seq(2, length(Flds)+1)),
-    {function, L, Fname, 1,
-     [{clause, L,
-       [{atom, L, FldName}],
-       [],
-       [{integer, L, Pos}]} || {FldName, Pos} <- FieldList] ++
-     [{clause, L,
-       [{var, L, '_'}], [], [{integer, L, 0}]}]
-    }.
+    [
+     funspec(L, Fname, [t_union(L, [t_attr(L, Rname),
+				    t_atom(L)])],
+	     t_integer(L)),
+     {function, L, Fname, 1,
+      [{clause, L,
+	[{atom, L, FldName}],
+	[],
+	[{integer, L, Pos}]} || {FldName, Pos} <- FieldList] ++
+	  [{clause, L,
+	    [{var, L, 'A'}],
+	    [[{call, L, {atom, L, is_atom}, [{var, L, 'A'}]}]],
+	    [{integer, L, 0}]}]
+     }].
 
+f_fromlist_1(Rname, L) ->
+    Fname = fname(fromlist, Rname),
+    [
+     funspec(L, Fname, [t_list(L, [t_prop(L, Rname)])], t_record(L, Rname)),
+     {function, L, Fname, 1,
+      [{clause, L, [{var, L, 'Vals'}],
+	[[ {call, L, {atom, L, is_list}, [{var, L, 'Vals'}]} ]],
+	[{call, L, {atom, L, Fname},
+	  [{var, L, 'Vals'},
+	   {call, L, {atom, L, fname(new, Rname)}, []}]}
+	]}
+      ]}].
 
 f_fromlist_2(Rname, Flds, L) ->
     Fname = fname(fromlist, Rname),
     FldList = field_list(Flds),
-    {function, L, Fname, 2,
-     [{clause, L, [{var, L, 'Vals'}, {var, L, 'Rec'}], [],
-       [{match, L, {var, L, 'AttrNames'}, FldList},
-	{match, L, {var, L, 'F'},
-	 {'fun', L,
-	  {clauses,
-	   [{clause, L, [{nil, L},
-			 {var, L,'R'},
-			 {var, L,'_F1'}],
-	     [],
-	     [{var, L, 'R'}]},
-	    {clause, L, [{cons, L,
-			  {tuple, L, [{var, L, 'H'},
-				      {var, L, 'Pos'}]},
-			  {var, L, 'T'}},
-			 {var, L, 'R'}, {var, L, 'F1'}],
-	     [],
-	     [{'case', L, {call, L, {remote, L,
-				     {atom,L,lists},{atom,L,keyfind}},
-			   [{var,L,'H'},{integer,L,1},{var,L,'Vals'}]},
-	       [{clause, L, [{atom,L,false}], [],
-		 [{call, L, {var, L, 'F1'}, [{var, L, 'T'},
-					     {var, L, 'R'},
-					     {var, L, 'F1'}]}]},
-		{clause, L, [{tuple, L, [{var,L,'_'},{var,L,'Val'}]}],
-		 [],
-		 [{call, L, {var, L, 'F1'},
-		   [{var, L, 'T'},
-		    {call, L, {atom, L, 'setelement'},
-		     [{var, L, 'Pos'}, {var, L, 'R'}, {var, L, 'Val'}]},
-		    {var, L, 'F1'}]}]}
-	       ]}
-	     ]}
-	   ]}}},
-	{call, L, {var, L, 'F'}, [{var, L, 'AttrNames'},
-				  {var, L, 'Rec'},
-				  {var, L, 'F'}]}
-       ]}
-     ]}.
+    TRec = t_record(L, Rname),
+    [
+     funspec(L, Fname, [t_list(L, [t_prop(L, Rname)]), TRec],
+	     TRec),
+     {function, L, Fname, 2,
+      [{clause, L, [{var, L, 'Vals'}, {var, L, 'Rec'}], [],
+	[{match, L, {var, L, 'AttrNames'}, FldList},
+	 {match, L, {var, L, 'F'},
+	  {'fun', L,
+	   {clauses,
+	    [{clause, L, [{nil, L},
+			  {var, L,'R'},
+			  {var, L,'_F1'}],
+	      [],
+	      [{var, L, 'R'}]},
+	     {clause, L, [{cons, L,
+			   {tuple, L, [{var, L, 'H'},
+				       {var, L, 'Pos'}]},
+			   {var, L, 'T'}},
+			  {var, L, 'R'}, {var, L, 'F1'}],
+	      [[{call, L, {atom, L, is_list}, [{var, L, 'T'}]}]],
+	      [{'case', L, {call, L, {remote, L,
+				      {atom,L,lists},{atom,L,keyfind}},
+			    [{var,L,'H'},{integer,L,1},{var,L,'Vals'}]},
+		[{clause, L, [{atom,L,false}], [],
+		  [{call, L, {var, L, 'F1'}, [{var, L, 'T'},
+					      {var, L, 'R'},
+					      {var, L, 'F1'}]}]},
+		 {clause, L, [{tuple, L, [{var,L,'_'},{var,L,'Val'}]}],
+		  [],
+		  [{call, L, {var, L, 'F1'},
+		    [{var, L, 'T'},
+		     {call, L, {atom, L, 'setelement'},
+		      [{var, L, 'Pos'}, {var, L, 'R'}, {var, L, 'Val'}]},
+		     {var, L, 'F1'}]}]}
+		]}
+	      ]}
+	    ]}}},
+	 {call, L, {var, L, 'F'}, [{var, L, 'AttrNames'},
+				   {var, L, 'Rec'},
+				   {var, L, 'F'}]}
+	]}
+      ]}].
 
 field_list(Flds) ->
     erl_parse:abstract(
@@ -553,8 +649,6 @@ f_info_3(Versions, L) ->
        [],
        [{call, L, {atom, L, fname(info,R,V)}, [{var, L, 'Info'}]}]} ||
          {R,V} <- flat_versions(Versions)]},
-%%    io:fwrite("Versions = ~p~n", [Versions]),
-%%    io:fwrite("F = ~p~n", [F]),
     F.
 
 f_pos_2(Acc, L) ->
@@ -695,7 +789,6 @@ f_convert(_Vsns, L) ->
                        [{var, L, 'Rname'}]}]},
                     {var, L, 'Discarded'}]}]
       }]}.
-           
 
 %%% ========== generic parse_transform stuff ==============
 
@@ -714,7 +807,7 @@ rpt_error(Reason, Fun, Info) ->
 	     "*** Reason     = ~p~n",
              "*** Location: ~p~n",
 	     ["*** ~10w = ~p~n" || _ <- Info]]),
-    Args = [Reason, Fun | 
+    Args = [Reason, Fun |
 	    lists:foldr(
 	      fun({K,V}, Acc) ->
 		      [K, V | Acc]

@@ -8,6 +8,7 @@ module_test() ->
     M = test_exprecs,
     RecNames = lists:concat(
 		 [Rs || {export_records, Rs} <- M:module_info(attributes)]),
+    io:fwrite("RecNames = ~p~n", [RecNames]),
     false = M:'#is_record-'([]),
     false = M:'#is_record-'([], []),
     [test_record(R, M) || R <- RecNames].

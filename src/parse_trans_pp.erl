@@ -103,8 +103,11 @@ pp_beam_to_str(F) ->
     case beam_lib:chunks(F, [abstract_code]) of
         {ok, {_, [{abstract_code,{_,AC}}]}} ->
             {ok, lists:flatten(
-                   io_lib:fwrite("~s~n", [erl_prettypr:format(
-                                            erl_syntax:form_list(AC))])
+                   %% io_lib:fwrite("~s~n", [erl_prettypr:format(
+                   %%                          erl_syntax:form_list(AC))])
+		   io_lib:fwrite("~s~n", [lists:flatten(
+					    [erl_pp:form(Form) ||
+						Form <- AC])])
                   )};
         Other ->
             {error, Other}

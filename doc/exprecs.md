@@ -1,9 +1,6 @@
-Module exprecs
-==============
 
 
-<h1>Module exprecs</h1>
-
+#Module exprecs#
 * [Description](#description)
 * [Data Types](#types)
 * [Function Index](#index)
@@ -14,10 +11,9 @@ Parse transform for generating record access functions.
 
 
 
-__Authors:__ : Ulf Wiger ([`ulf.wiger@ericsson.com`](mailto:ulf.wiger@ericsson.com)).
+__Authors:__ : Ulf Wiger ([`ulf.wiger@ericsson.com`](mailto:ulf.wiger@ericsson.com)).<a name="description"></a>
 
-<h2><a name="description">Description</a></h2>
-
+##Description##
   
 
 This parse transform can be used to reduce compile-time
@@ -45,13 +41,17 @@ to lay out access functions for the exported records:
 <pre>
   -module(test_exprecs).
  
-  -record(r, {a, b, c}).
+  -record(r, {a = 0 :: integer(),
+              b = 0 :: integer(),
+              c = 0 :: integer()}).
   -export_records([r]).
  
   -export(['#new-'/1, '#info-'/1, '#info-'/2, '#pos-'/2,
            '#is_record-'/2, '#get-'/2, '#set-'/2, '#fromlist-'/2,
            '#new-r'/0, '#new-r'/1, '#get-r'/2, '#set-r'/2,
-           '#pos-r'/1, '#fromlist-r'/2, '#info-r'/1]).
+           '#pos-r'/1, '#fromlist-r'/1, '#fromlist-r'/2, '#info-r'/1]).
+ 
+  -type '#prop-r'() :: {a, integer()} | {b, integer()} | {c, integer()}.
  
   '#new-'(r) -> '#new-r'().
  
@@ -72,6 +72,11 @@ to lay out access functions for the exported records:
   '#set-'(Vals, Rec) when is_record(Rec, r) ->
       '#set-r'(Vals, Rec).
  
+  -spec '#fromlist-r'(['#prop-r'()]) -> #r{}.
+  '#fromlist-r'(Vals) when is_list(Vals) ->
+      '#fromlist-r'(Vals, '#new-r'()).
+ 
+  -spec '#fromlist-r'(['#prop-r'()], #r{}) -> #r{}.
   '#fromlist-'(Vals, Rec) when is_record(Rec, r) ->
       '#fromlist-r'(Vals, Rec).
  
@@ -87,6 +92,7 @@ to lay out access functions for the exported records:
   '#get-r'(Attr, R) ->
       erlang:error(bad_record_op, ['#get-r', Attr, R]).
  
+  -spec '#set-r'(['#prop-r'()], #r{}) -> #r{}.
   '#set-r'(Vals, Rec) ->
       F = fun ([], R, _F1) -> R;
               ([{a, V} | T], R, F1) -> F1(T, R#r{a = V}, F1);
@@ -108,6 +114,7 @@ to lay out access functions for the exported records:
           end,
       F(AttrNames, Rec, F).
  
+  -spec '#pos-r'('#attr-r'()) -> integer().
   '#pos-r'(a) -> 2;
   '#pos-r'(b) -> 3;
   '#pos-r'(c) -> 4;
@@ -116,16 +123,14 @@ to lay out access functions for the exported records:
   '#info-r'(fields) -> record_info(fields, r);
   '#info-r'(size) -> record_info(size, r).
   </pre>
+<a name="types"></a>
+
+##Data Types##
 
 
-<h2><a name="types">Data Types</a></h2>
 
 
-
-
-
-<h3 class="typedecl"><a name="type-form">form()</a></h3>
-
+###<a name="type-form">form()</a>##
 
 
 
@@ -133,44 +138,39 @@ to lay out access functions for the exported records:
 
 
 
-<h3 class="typedecl"><a name="type-forms">forms()</a></h3>
+###<a name="type-forms">forms()</a>##
 
 
 
-
-<pre>forms() = [<a href="#type-form">form()</a>]</pre>
-
+<pre>forms() = [[form()](#type-form)]</pre>
 
 
-<h3 class="typedecl"><a name="type-options">options()</a></h3>
 
+###<a name="type-options">options()</a>##
 
 
 
 <pre>options() = [{atom(), any()}]</pre>
+<a name="index"></a>
 
-
-<h2><a name="index">Function Index</a></h2>
-
+##Function Index##
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#parse_transform-2">parse_transform/2</a></td><td></td></tr></table>
 
 
+<a name="functions"></a>
 
-
-<h2><a name="functions">Function Details</a></h2>
-
+##Function Details##
 
 <a name="parse_transform-2"></a>
 
-<h3>parse_transform/2</h3>
+###parse_transform/2##
 
 
 
 
-
-<pre>parse_transform(Forms::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>) -> <a href="#type-forms">forms()</a></pre>
+<pre>parse_transform(Forms::[forms()](#type-forms), Options::[options()](#type-options)) -&gt; [forms()](#type-forms)</pre>
 <br></br>
 
 
