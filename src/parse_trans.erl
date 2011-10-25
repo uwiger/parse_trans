@@ -90,7 +90,8 @@
 
 -define(ERROR(R, F, I),
         begin
-            rpt_error(R, F, I),
+	    Trace = erlang:get_stacktrace(),
+            rpt_error(R, F, I, Trace),
             throw({error,get_pos(I),{unknown,R}})
         end).
 
@@ -120,7 +121,7 @@
 -spec error(string(), any(), [{any(),any()}]) ->
     none().
 error(R, F, I) ->
-    rpt_error(R, F, I),
+    rpt_error(R, F, I, erlang:get_stacktrace()),
     throw({error,get_pos(I),{unknown,R}}).
 
 
@@ -604,13 +605,14 @@ mapfoldl(F, Accu0, [Hd|Tail]) ->
 mapfoldl(F, Accu, []) when is_function(F, 2) -> {[], Accu}.
 
 
-rpt_error(Reason, Fun, Info) ->
+rpt_error(Reason, Fun, Info, Trace) ->
     Fmt = lists:flatten(
 	    ["*** ERROR in parse_transform function:~n"
 	     "*** Reason     = ~p~n",
              "*** Location: ~p~n",
+	     "*** Trace: ~p~n",
 	     ["*** ~10w = ~p~n" || _ <- Info]]),
-    Args = [Reason, Fun |
+    Args = [Reason, Fun, Trace |
 	    lists:foldr(
 	      fun({K,V}, Acc) ->
 		      [K, V | Acc]

@@ -7,8 +7,9 @@
 -compile({parse_transform, exprecs}).
 
 -record(r, {a = 0 :: integer(), b = 0 :: integer(), c = 0 :: integer()}).
+-record(s, {a}).
 
--export_records([r]).
+-export_records([r, s]).
 
 
 f() ->

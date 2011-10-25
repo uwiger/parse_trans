@@ -31,4 +31,4 @@ test_record(R, M) ->
     ?assertError(bad_record_op, M:'#get-'(17,Rec1)),
     PosL = lists:seq(2, FieldCount + 1),
     PosL = [M:'#pos-'(R, A) || A <- Fields],
-    ?assertEqual(0, M:'#pos-'(R, 17)).
+    ?assertEqual(0, M:'#pos-'(R, bad_attr_name)).

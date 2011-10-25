@@ -86,7 +86,7 @@ pp_beam(Beam) ->
 %% @spec (Beam::filename(), Out::filename()) -> ok | {error, Reason}
 %%
 %% @doc
-%% Reads debug_info from the beam file Beam and pretty-prints it as 
+%% Reads debug_info from the beam file Beam and pretty-prints it as
 %% Erlang source code, storing it in the file Out.
 %% @end
 %%
@@ -101,7 +101,8 @@ pp_beam(F, Out) ->
 
 pp_beam_to_str(F) ->
     case beam_lib:chunks(F, [abstract_code]) of
-        {ok, {_, [{abstract_code,{_,AC}}]}} ->
+        {ok, {_, [{abstract_code,{_,AC0}}]}} ->
+	    AC = epp:restore_typed_record_fields(AC0),
             {ok, lists:flatten(
                    %% io_lib:fwrite("~s~n", [erl_prettypr:format(
                    %%                          erl_syntax:form_list(AC))])
