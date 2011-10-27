@@ -38,90 +38,289 @@ inserting a compiler attribute,
 `export_records([RecName|...])` causes this transform
 to lay out access functions for the exported records:
 
+As an example, consider the following module:
 <pre>
   -module(test_exprecs).
+  -export([f/0]).
+ 
+  -compile({parse_transform, exprecs}).
  
   -record(r, {a = 0 :: integer(),
               b = 0 :: integer(),
               c = 0 :: integer()}).
-  -export_records([r]).
  
-  -export(['#new-'/1, '#info-'/1, '#info-'/2, '#pos-'/2,
-           '#is_record-'/2, '#get-'/2, '#set-'/2, '#fromlist-'/2,
-           '#new-r'/0, '#new-r'/1, '#get-r'/2, '#set-r'/2,
-           '#pos-r'/1, '#fromlist-r'/1, '#fromlist-r'/2, '#info-r'/1]).
+  -record(s,{a}).
+ 
+  -export_records([r,s]).
+ 
+  f() ->
+      {new,'#new-r'([])}.
+  </pre>
+
+<pre>
+  -module(test_exprecs).
+  -compile({pt_pp_src,true}).
+  -export([f/0]).
+  -record(r,{a = 0 :: integer(),b = 0 :: integer(),c = 0 :: integer()}).
+  -record(s,{a}).
+  -export_records([r,s]).
+  -export(['#exported-records'/0,
+           '#new-'/1,
+           '#info-'/1,
+           '#info-'/2,
+           '#pos-'/2,
+           '#is_record-'/1,
+           '#is_record-'/2,
+           '#get-'/2,
+           '#set-'/2,
+           '#fromlist-'/2,
+           '#new-r'/0,
+           '#new-r'/1,
+           '#get-r'/2,
+           '#set-r'/2,
+           '#pos-r'/1,
+           '#fromlist-r'/1,
+           '#fromlist-r'/2,
+           '#info-r'/1,
+           '#new-s'/0,
+           '#new-s'/1,
+           '#get-s'/2,
+           '#set-s'/2,
+           '#pos-s'/1,
+           '#fromlist-s'/1,
+           '#fromlist-s'/2,
+           '#info-s'/1]).
  
   -type '#prop-r'() :: {a, integer()} | {b, integer()} | {c, integer()}.
+  -type '#attr-r'() :: a | b | c.
+  -type '#prop-s'() :: {a, any()}.
+  -type '#attr-s'() :: a.
  
-  '#new-'(r) -> '#new-r'().
+  -spec '#exported-records'() -> [r | s].
+  '#exported-records'() ->
+      [r,s].
  
-  '#info-'(RecName) -> '#info-'(RecName, fields).
+  -spec '#new-'(r) -> #r{};
+               (s) -> #s{}.
+  '#new-'(r) ->
+      '#new-r'();
+  '#new-'(s) ->
+      '#new-s'().
  
-  '#info-'(r, Info) -> '#info-r'(Info).
+  -spec '#info-'(r) -> [a | b | c];
+                (s) -> [a].
+  '#info-'(RecName) ->
+      '#info-'(RecName, fields).
  
-  '#pos-'(r, Attr) -> '#pos-r'(Attr).
+  -spec '#info-'(r, size) -> 4;
+                (r, fields) -> [a | b | c];
+                (s, size) -> 2;
+                (s, fields) -> [a].
+  '#info-'(r, Info) ->
+      '#info-r'(Info);
+  '#info-'(s, Info) ->
+      '#info-s'(Info).
  
-  '#is_record-'(r, Rec)
-      when tuple_size(Rec) == 3, element(1, Rec) == r ->
+  -spec '#pos-'(r, a) -> 1;
+               (r, b) -> 2;
+               (r, c) -> 3;
+               (s, a) -> 1.
+  '#pos-'(r, Attr) ->
+      '#pos-r'(Attr);
+  '#pos-'(s, Attr) ->
+      '#pos-s'(Attr).
+ 
+  -spec '#is_record-'(#r{}) -> true;
+                     (#s{}) -> true;
+                     (any()) -> false.
+  '#is_record-'(X) ->
+      if
+          is_record(X, r) ->
+              true;
+          is_record(X, s) ->
+              true;
+          true ->
+              false
+      end.
+ 
+  -spec '#is_record-'(r, #r{}) -> true;
+                     (s, #s{}) -> true;
+                     (any(), any()) -> false.
+  '#is_record-'(s, Rec) when tuple_size(Rec) == 2, element(1, Rec) == s ->
       true;
-  '#is_record-'(_, _) -> false.
+  '#is_record-'(r, Rec) when tuple_size(Rec) == 4, element(1, Rec) == r ->
+      true;
+  '#is_record-'(_, _) ->
+      false.
  
+  -spec '#get-'(a, #r{}) -> integer();
+               (b, #r{}) -> integer();
+               (c, #r{}) -> integer();
+               (a, #s{}) -> any();
+               (['#attr-r'()], #r{}) -> [integer()];
+               (['#attr-s'()], #s{}) -> [any()].
   '#get-'(Attrs, Rec) when is_record(Rec, r) ->
-      '#get-r'(Attrs, Rec).
+      '#get-r'(Attrs, Rec);
+  '#get-'(Attrs, Rec) when is_record(Rec, s) ->
+      '#get-s'(Attrs, Rec).
  
+  -spec '#set-'(['#prop-r'()], #r{}) -> #r{};
+               (['#prop-s'()], #s{}) -> #s{}.
   '#set-'(Vals, Rec) when is_record(Rec, r) ->
-      '#set-r'(Vals, Rec).
+      '#set-r'(Vals, Rec);
+  '#set-'(Vals, Rec) when is_record(Rec, s) ->
+      '#set-s'(Vals, Rec).
+ 
+  -spec '#fromlist-'(['#prop-r'()], #r{}) -> #r{};
+                    (['#prop-s'()], #s{}) -> #s{}.
+  '#fromlist-'(Vals, Rec) when is_record(Rec, r) ->
+      '#fromlist-r'(Vals, Rec);
+  '#fromlist-'(Vals, Rec) when is_record(Rec, s) ->
+      '#fromlist-s'(Vals, Rec).
+ 
+  -spec '#new-r'() -> #r{}.
+  '#new-r'() ->
+      #r{}.
+ 
+  -spec '#new-r'(['#prop-r'()]) -> #r{}.
+  '#new-r'(Vals) ->
+      '#set-r'(Vals, #r{}).
+ 
+  -spec '#get-r'(a, #r{}) -> integer();
+                (b, #r{}) -> integer();
+                (c, #r{}) -> integer();
+                (['#attr-r'()], #r{}) -> [integer()].
+  '#get-r'(Attrs, R) when is_list(Attrs) ->
+      [
+       '#get-r'(A, R) ||
+           A <- Attrs
+      ];
+  '#get-r'(a, R) ->
+      R#r.a;
+  '#get-r'(b, R) ->
+      R#r.b;
+  '#get-r'(c, R) ->
+      R#r.c;
+  '#get-r'(Attr, R) ->
+      error(bad_record_op, ['#get-r',Attr,R]).
+ 
+  -spec '#set-r'(['#prop-r'()], #r{}) -> #r{}.
+  '#set-r'(Vals, Rec) ->
+      F = fun([], R, _F1) ->
+                 R;
+             ([{a,V}|T], R, F1) when is_list(T) ->
+                 F1(T, R#r{a = V}, F1);
+             ([{b,V}|T], R, F1) when is_list(T) ->
+                 F1(T, R#r{b = V}, F1);
+             ([{c,V}|T], R, F1) when is_list(T) ->
+                 F1(T, R#r{c = V}, F1);
+             (Vs, R, _) ->
+                 error(bad_record_op, ['#set-r',Vs,R])
+          end,
+      F(Vals, Rec, F).
  
   -spec '#fromlist-r'(['#prop-r'()]) -> #r{}.
   '#fromlist-r'(Vals) when is_list(Vals) ->
       '#fromlist-r'(Vals, '#new-r'()).
  
   -spec '#fromlist-r'(['#prop-r'()], #r{}) -> #r{}.
-  '#fromlist-'(Vals, Rec) when is_record(Rec, r) ->
-      '#fromlist-r'(Vals, Rec).
- 
-  '#new-r'() -> #r{}.
- 
-  '#new-r'(Vals) -> '#set-r'(Vals, #r{}).
- 
-  '#get-r'(Attrs, R) when is_list(Attrs) ->
-      ['#get-r'(A, R) || A <- Attrs];
-  '#get-r'(a, R) -> R#r.a;
-  '#get-r'(b, R) -> R#r.b;
-  '#get-r'(c, R) -> R#r.c;
-  '#get-r'(Attr, R) ->
-      erlang:error(bad_record_op, ['#get-r', Attr, R]).
- 
-  -spec '#set-r'(['#prop-r'()], #r{}) -> #r{}.
-  '#set-r'(Vals, Rec) ->
-      F = fun ([], R, _F1) -> R;
-              ([{a, V} | T], R, F1) -> F1(T, R#r{a = V}, F1);
-              ([{b, V} | T], R, F1) -> F1(T, R#r{b = V}, F1);
-              ([{c, V} | T], R, F1) -> F1(T, R#r{c = V}, F1);
-              (Vs, R, _) ->
-                  erlang:error(bad_record_op, ['#set-r', Vs, R])
-          end,
-      F(Vals, Rec, F).
- 
   '#fromlist-r'(Vals, Rec) ->
-      AttrNames = [{a, 2}, {b, 3}, {c, 4}],
-      F = fun ([], R, _F1) -> R;
-              ([{H, Pos} | T], R, F1) ->
-                  case lists:keyfind(H, 1, Vals) of
-                    false -> F1(T, R, F1);
-                    {_, Val} -> F1(T, setelement(Pos, R, Val), F1)
-                  end
+      AttrNames = [{a,2},{b,3},{c,4}],
+      F = fun([], R, _F1) ->
+                 R;
+             ([{H,Pos}|T], R, F1) when is_list(T) ->
+                 case lists:keyfind(H, 1, Vals) of
+                     false ->
+                         F1(T, R, F1);
+                     {_,Val} ->
+                         F1(T, setelement(Pos, R, Val), F1)
+                 end
           end,
       F(AttrNames, Rec, F).
  
-  -spec '#pos-r'('#attr-r'()) -> integer().
-  '#pos-r'(a) -> 2;
-  '#pos-r'(b) -> 3;
-  '#pos-r'(c) -> 4;
-  '#pos-r'(_) -> 0.
+  -spec '#pos-r'('#attr-r'() | atom()) -> integer().
+  '#pos-r'(a) ->
+      2;
+  '#pos-r'(b) ->
+      3;
+  '#pos-r'(c) ->
+      4;
+  '#pos-r'(A) when is_atom(A) ->
+      0.
  
-  '#info-r'(fields) -> record_info(fields, r);
-  '#info-r'(size) -> record_info(size, r).
+  -spec '#info-r'(fields) -> [a | b | c];
+                 (size) -> 3.
+  '#info-r'(fields) ->
+      record_info(fields, r);
+  '#info-r'(size) ->
+      record_info(size, r).
+ 
+  -spec '#new-s'() -> #s{}.
+  '#new-s'() ->
+      #s{}.
+ 
+  -spec '#new-s'(['#prop-s'()]) -> #s{}.
+  '#new-s'(Vals) ->
+      '#set-s'(Vals, #s{}).
+ 
+  -spec '#get-s'(a, #s{}) -> any();
+                (['#attr-s'()], #s{}) -> [any()].
+  '#get-s'(Attrs, R) when is_list(Attrs) ->
+      [
+       '#get-s'(A, R) ||
+           A <- Attrs
+      ];
+  '#get-s'(a, R) ->
+      R#s.a;
+  '#get-s'(Attr, R) ->
+      error(bad_record_op, ['#get-s',Attr,R]).
+ 
+  -spec '#set-s'(['#prop-s'()], #s{}) -> #s{}.
+  '#set-s'(Vals, Rec) ->
+      F = fun([], R, _F1) ->
+                 R;
+             ([{a,V}|T], R, F1) when is_list(T) ->
+                 F1(T, R#s{a = V}, F1);
+             (Vs, R, _) ->
+                 error(bad_record_op, ['#set-s',Vs,R])
+          end,
+      F(Vals, Rec, F).
+ 
+  -spec '#fromlist-s'(['#prop-s'()]) -> #s{}.
+  '#fromlist-s'(Vals) when is_list(Vals) ->
+      '#fromlist-s'(Vals, '#new-s'()).
+ 
+  -spec '#fromlist-s'(['#prop-s'()], #s{}) -> #s{}.
+  '#fromlist-s'(Vals, Rec) ->
+      AttrNames = [{a,2}],
+      F = fun([], R, _F1) ->
+                 R;
+             ([{H,Pos}|T], R, F1) when is_list(T) ->
+                 case lists:keyfind(H, 1, Vals) of
+                     false ->
+                         F1(T, R, F1);
+                     {_,Val} ->
+                         F1(T, setelement(Pos, R, Val), F1)
+                 end
+          end,
+      F(AttrNames, Rec, F).
+ 
+  -spec '#pos-s'('#attr-s'() | atom()) -> integer().
+  '#pos-s'(a) ->
+      2;
+  '#pos-s'(A) when is_atom(A) ->
+      0.
+ 
+  -spec '#info-s'(fields) -> [a];
+                 (size) -> 1.
+  '#info-s'(fields) ->
+      record_info(fields, s);
+  '#info-s'(size) ->
+      record_info(size, s).
+ 
+  f() ->
+      {new,'#new-r'([])}.
+ 
   </pre>
 <a name="types"></a>
 

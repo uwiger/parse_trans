@@ -44,90 +44,289 @@
 %% <code>export_records([RecName|...])</code> causes this transform
 %% to lay out access functions for the exported records:</p>
 %%
+%% As an example, consider the following module:
 %% <pre>
 %% -module(test_exprecs).
+%% -export([f/0]).
+%%
+%% -compile({parse_transform, exprecs}).
 %%
 %% -record(r, {a = 0 :: integer(),
 %%             b = 0 :: integer(),
 %%             c = 0 :: integer()}).
-%% -export_records([r]).
 %%
-%% -export(['#new-'/1, '#info-'/1, '#info-'/2, '#pos-'/2,
-%%          '#is_record-'/2, '#get-'/2, '#set-'/2, '#fromlist-'/2,
-%%          '#new-r'/0, '#new-r'/1, '#get-r'/2, '#set-r'/2,
-%%          '#pos-r'/1, '#fromlist-r'/1, '#fromlist-r'/2, '#info-r'/1]).
+%% -record(s,{a}).
+%%
+%% -export_records([r,s]).
+%%
+%% f() -&gt;
+%%     {new,'#new-r'([])}.
+%% </pre>
+%%
+%% <pre>
+%% -module(test_exprecs).
+%% -compile({pt_pp_src,true}).
+%% -export([f/0]).
+%% -record(r,{a = 0 :: integer(),b = 0 :: integer(),c = 0 :: integer()}).
+%% -record(s,{a}).
+%% -export_records([r,s]).
+%% -export(['#exported-records'/0,
+%%          '#new-'/1,
+%%          '#info-'/1,
+%%          '#info-'/2,
+%%          '#pos-'/2,
+%%          '#is_record-'/1,
+%%          '#is_record-'/2,
+%%          '#get-'/2,
+%%          '#set-'/2,
+%%          '#fromlist-'/2,
+%%          '#new-r'/0,
+%%          '#new-r'/1,
+%%          '#get-r'/2,
+%%          '#set-r'/2,
+%%          '#pos-r'/1,
+%%          '#fromlist-r'/1,
+%%          '#fromlist-r'/2,
+%%          '#info-r'/1,
+%%          '#new-s'/0,
+%%          '#new-s'/1,
+%%          '#get-s'/2,
+%%          '#set-s'/2,
+%%          '#pos-s'/1,
+%%          '#fromlist-s'/1,
+%%          '#fromlist-s'/2,
+%%          '#info-s'/1]).
 %%
 %% -type '#prop-r'() :: {a, integer()} | {b, integer()} | {c, integer()}.
+%% -type '#attr-r'() :: a | b | c.
+%% -type '#prop-s'() :: {a, any()}.
+%% -type '#attr-s'() :: a.
 %%
-%% '#new-'(r) -&gt; '#new-r'().
+%% -spec '#exported-records'() -&gt; [r | s].
+%% '#exported-records'() -&gt;
+%%     [r,s].
 %%
-%% '#info-'(RecName) -&gt; '#info-'(RecName, fields).
+%% -spec '#new-'(r) -&gt; #r{};
+%%              (s) -&gt; #s{}.
+%% '#new-'(r) -&gt;
+%%     '#new-r'();
+%% '#new-'(s) -&gt;
+%%     '#new-s'().
 %%
-%% '#info-'(r, Info) -&gt; '#info-r'(Info).
+%% -spec '#info-'(r) -&gt; [a | b | c];
+%%               (s) -&gt; [a].
+%% '#info-'(RecName) -&gt;
+%%     '#info-'(RecName, fields).
 %%
-%% '#pos-'(r, Attr) -&gt; '#pos-r'(Attr).
+%% -spec '#info-'(r, size) -&gt; 4;
+%%               (r, fields) -&gt; [a | b | c];
+%%               (s, size) -&gt; 2;
+%%               (s, fields) -&gt; [a].
+%% '#info-'(r, Info) -&gt;
+%%     '#info-r'(Info);
+%% '#info-'(s, Info) -&gt;
+%%     '#info-s'(Info).
 %%
-%% '#is_record-'(r, Rec)
-%%     when tuple_size(Rec) == 3, element(1, Rec) == r -&gt;
+%% -spec '#pos-'(r, a) -&gt; 1;
+%%              (r, b) -&gt; 2;
+%%              (r, c) -&gt; 3;
+%%              (s, a) -&gt; 1.
+%% '#pos-'(r, Attr) -&gt;
+%%     '#pos-r'(Attr);
+%% '#pos-'(s, Attr) -&gt;
+%%     '#pos-s'(Attr).
+%%
+%% -spec '#is_record-'(#r{}) -&gt; true;
+%%                    (#s{}) -&gt; true;
+%%                    (any()) -&gt; false.
+%% '#is_record-'(X) -&gt;
+%%     if
+%%         is_record(X, r) -&gt;
+%%             true;
+%%         is_record(X, s) -&gt;
+%%             true;
+%%         true -&gt;
+%%             false
+%%     end.
+%%
+%% -spec '#is_record-'(r, #r{}) -&gt; true;
+%%                    (s, #s{}) -&gt; true;
+%%                    (any(), any()) -&gt; false.
+%% '#is_record-'(s, Rec) when tuple_size(Rec) == 2, element(1, Rec) == s -&gt;
 %%     true;
-%% '#is_record-'(_, _) -&gt; false.
+%% '#is_record-'(r, Rec) when tuple_size(Rec) == 4, element(1, Rec) == r -&gt;
+%%     true;
+%% '#is_record-'(_, _) -&gt;
+%%     false.
 %%
+%% -spec '#get-'(a, #r{}) -&gt; integer();
+%%              (b, #r{}) -&gt; integer();
+%%              (c, #r{}) -&gt; integer();
+%%              (a, #s{}) -&gt; any();
+%%              (['#attr-r'()], #r{}) -&gt; [integer()];
+%%              (['#attr-s'()], #s{}) -&gt; [any()].
 %% '#get-'(Attrs, Rec) when is_record(Rec, r) -&gt;
-%%     '#get-r'(Attrs, Rec).
+%%     '#get-r'(Attrs, Rec);
+%% '#get-'(Attrs, Rec) when is_record(Rec, s) -&gt;
+%%     '#get-s'(Attrs, Rec).
 %%
+%% -spec '#set-'(['#prop-r'()], #r{}) -&gt; #r{};
+%%              (['#prop-s'()], #s{}) -&gt; #s{}.
 %% '#set-'(Vals, Rec) when is_record(Rec, r) -&gt;
-%%     '#set-r'(Vals, Rec).
+%%     '#set-r'(Vals, Rec);
+%% '#set-'(Vals, Rec) when is_record(Rec, s) -&gt;
+%%     '#set-s'(Vals, Rec).
 %%
-%% -spec '#fromlist-r'(['#prop-r'()]) -> #r{}.
-%% '#fromlist-r'(Vals) when is_list(Vals) ->
-%%     '#fromlist-r'(Vals, '#new-r'()).
-%%
-%% -spec '#fromlist-r'(['#prop-r'()], #r{}) -> #r{}.
+%% -spec '#fromlist-'(['#prop-r'()], #r{}) -&gt; #r{};
+%%                   (['#prop-s'()], #s{}) -&gt; #s{}.
 %% '#fromlist-'(Vals, Rec) when is_record(Rec, r) -&gt;
-%%     '#fromlist-r'(Vals, Rec).
+%%     '#fromlist-r'(Vals, Rec);
+%% '#fromlist-'(Vals, Rec) when is_record(Rec, s) -&gt;
+%%     '#fromlist-s'(Vals, Rec).
 %%
-%% '#new-r'() -&gt; #r{}.
+%% -spec '#new-r'() -&gt; #r{}.
+%% '#new-r'() -&gt;
+%%     #r{}.
 %%
-%% '#new-r'(Vals) -&gt; '#set-r'(Vals, #r{}).
+%% -spec '#new-r'(['#prop-r'()]) -&gt; #r{}.
+%% '#new-r'(Vals) -&gt;
+%%     '#set-r'(Vals, #r{}).
 %%
+%% -spec '#get-r'(a, #r{}) -&gt; integer();
+%%               (b, #r{}) -&gt; integer();
+%%               (c, #r{}) -&gt; integer();
+%%               (['#attr-r'()], #r{}) -&gt; [integer()].
 %% '#get-r'(Attrs, R) when is_list(Attrs) -&gt;
-%%     ['#get-r'(A, R) || A &lt;- Attrs];
-%% '#get-r'(a, R) -&gt; R#r.a;
-%% '#get-r'(b, R) -&gt; R#r.b;
-%% '#get-r'(c, R) -&gt; R#r.c;
+%%     [
+%%      '#get-r'(A, R) ||
+%%          A &lt;- Attrs
+%%     ];
+%% '#get-r'(a, R) -&gt;
+%%     R#r.a;
+%% '#get-r'(b, R) -&gt;
+%%     R#r.b;
+%% '#get-r'(c, R) -&gt;
+%%     R#r.c;
 %% '#get-r'(Attr, R) -&gt;
-%%     erlang:error(bad_record_op, ['#get-r', Attr, R]).
+%%     error(bad_record_op, ['#get-r',Attr,R]).
 %%
 %% -spec '#set-r'(['#prop-r'()], #r{}) -&gt; #r{}.
 %% '#set-r'(Vals, Rec) -&gt;
-%%     F = fun ([], R, _F1) -&gt; R;
-%%             ([{a, V} | T], R, F1) -&gt; F1(T, R#r{a = V}, F1);
-%%             ([{b, V} | T], R, F1) -&gt; F1(T, R#r{b = V}, F1);
-%%             ([{c, V} | T], R, F1) -&gt; F1(T, R#r{c = V}, F1);
-%%             (Vs, R, _) -&gt;
-%%                 erlang:error(bad_record_op, ['#set-r', Vs, R])
+%%     F = fun([], R, _F1) -&gt;
+%%                R;
+%%            ([{a,V}|T], R, F1) when is_list(T) -&gt;
+%%                F1(T, R#r{a = V}, F1);
+%%            ([{b,V}|T], R, F1) when is_list(T) -&gt;
+%%                F1(T, R#r{b = V}, F1);
+%%            ([{c,V}|T], R, F1) when is_list(T) -&gt;
+%%                F1(T, R#r{c = V}, F1);
+%%            (Vs, R, _) -&gt;
+%%                error(bad_record_op, ['#set-r',Vs,R])
 %%         end,
 %%     F(Vals, Rec, F).
 %%
+%% -spec '#fromlist-r'(['#prop-r'()]) -&gt; #r{}.
+%% '#fromlist-r'(Vals) when is_list(Vals) -&gt;
+%%     '#fromlist-r'(Vals, '#new-r'()).
+%%
+%% -spec '#fromlist-r'(['#prop-r'()], #r{}) -&gt; #r{}.
 %% '#fromlist-r'(Vals, Rec) -&gt;
-%%     AttrNames = [{a, 2}, {b, 3}, {c, 4}],
-%%     F = fun ([], R, _F1) -&gt; R;
-%%             ([{H, Pos} | T], R, F1) -&gt;
-%%                 case lists:keyfind(H, 1, Vals) of
-%%                   false -&gt; F1(T, R, F1);
-%%                   {_, Val} -&gt; F1(T, setelement(Pos, R, Val), F1)
-%%                 end
+%%     AttrNames = [{a,2},{b,3},{c,4}],
+%%     F = fun([], R, _F1) -&gt;
+%%                R;
+%%            ([{H,Pos}|T], R, F1) when is_list(T) -&gt;
+%%                case lists:keyfind(H, 1, Vals) of
+%%                    false -&gt;
+%%                        F1(T, R, F1);
+%%                    {_,Val} -&gt;
+%%                        F1(T, setelement(Pos, R, Val), F1)
+%%                end
 %%         end,
 %%     F(AttrNames, Rec, F).
 %%
-%% -spec '#pos-r'('#attr-r'()) -&gt; integer().
-%% '#pos-r'(a) -&gt; 2;
-%% '#pos-r'(b) -&gt; 3;
-%% '#pos-r'(c) -&gt; 4;
-%% '#pos-r'(_) -&gt; 0.
+%% -spec '#pos-r'('#attr-r'() | atom()) -&gt; integer().
+%% '#pos-r'(a) -&gt;
+%%     2;
+%% '#pos-r'(b) -&gt;
+%%     3;
+%% '#pos-r'(c) -&gt;
+%%     4;
+%% '#pos-r'(A) when is_atom(A) -&gt;
+%%     0.
 %%
-%% '#info-r'(fields) -&gt; record_info(fields, r);
-%% '#info-r'(size) -&gt; record_info(size, r).
+%% -spec '#info-r'(fields) -&gt; [a | b | c];
+%%                (size) -&gt; 3.
+%% '#info-r'(fields) -&gt;
+%%     record_info(fields, r);
+%% '#info-r'(size) -&gt;
+%%     record_info(size, r).
+%%
+%% -spec '#new-s'() -&gt; #s{}.
+%% '#new-s'() -&gt;
+%%     #s{}.
+%%
+%% -spec '#new-s'(['#prop-s'()]) -&gt; #s{}.
+%% '#new-s'(Vals) -&gt;
+%%     '#set-s'(Vals, #s{}).
+%%
+%% -spec '#get-s'(a, #s{}) -&gt; any();
+%%               (['#attr-s'()], #s{}) -&gt; [any()].
+%% '#get-s'(Attrs, R) when is_list(Attrs) -&gt;
+%%     [
+%%      '#get-s'(A, R) ||
+%%          A &lt;- Attrs
+%%     ];
+%% '#get-s'(a, R) -&gt;
+%%     R#s.a;
+%% '#get-s'(Attr, R) -&gt;
+%%     error(bad_record_op, ['#get-s',Attr,R]).
+%%
+%% -spec '#set-s'(['#prop-s'()], #s{}) -&gt; #s{}.
+%% '#set-s'(Vals, Rec) -&gt;
+%%     F = fun([], R, _F1) -&gt;
+%%                R;
+%%            ([{a,V}|T], R, F1) when is_list(T) -&gt;
+%%                F1(T, R#s{a = V}, F1);
+%%            (Vs, R, _) -&gt;
+%%                error(bad_record_op, ['#set-s',Vs,R])
+%%         end,
+%%     F(Vals, Rec, F).
+%%
+%% -spec '#fromlist-s'(['#prop-s'()]) -&gt; #s{}.
+%% '#fromlist-s'(Vals) when is_list(Vals) -&gt;
+%%     '#fromlist-s'(Vals, '#new-s'()).
+%%
+%% -spec '#fromlist-s'(['#prop-s'()], #s{}) -&gt; #s{}.
+%% '#fromlist-s'(Vals, Rec) -&gt;
+%%     AttrNames = [{a,2}],
+%%     F = fun([], R, _F1) -&gt;
+%%                R;
+%%            ([{H,Pos}|T], R, F1) when is_list(T) -&gt;
+%%                case lists:keyfind(H, 1, Vals) of
+%%                    false -&gt;
+%%                        F1(T, R, F1);
+%%                    {_,Val} -&gt;
+%%                        F1(T, setelement(Pos, R, Val), F1)
+%%                end
+%%         end,
+%%     F(AttrNames, Rec, F).
+%%
+%% -spec '#pos-s'('#attr-s'() | atom()) -&gt; integer().
+%% '#pos-s'(a) -&gt;
+%%     2;
+%% '#pos-s'(A) when is_atom(A) -&gt;
+%%     0.
+%%
+%% -spec '#info-s'(fields) -&gt; [a];
+%%                (size) -&gt; 1.
+%% '#info-s'(fields) -&gt;
+%%     record_info(fields, s);
+%% '#info-s'(size) -&gt;
+%%     record_info(size, s).
+%%
+%% f() -&gt;
+%%     {new,'#new-r'([])}.
+%%
 %% </pre>
 %% @end
 
@@ -311,11 +510,11 @@ version_exports([_|_] = _Vsns) ->
 
 version_accessors(_L, #pass1{versions = []}) ->
     [];
-version_accessors(L, #pass1{versions = Vsns}) ->
+version_accessors(L, #pass1{versions = Vsns} = Acc) ->
     Flat_vsns = flat_versions(Vsns),
     [f_convert(Vsns, L),
      f_info_3(Vsns, L)]
-        ++ [f_info_1(Rname, L, V) || {Rname,V} <- Flat_vsns].
+        ++ [f_info_1(Rname, Acc, L, V) || {Rname,V} <- Flat_vsns].
 
 flat_versions(Vsns) ->
     lists:flatmap(fun({R,Vs}) ->
@@ -369,7 +568,7 @@ generate_accessors(L, Acc) ->
 		    f_fromlist_1(Rname, L),
 		    f_fromlist_2(Rname, Fields, L),
 		    f_pos_1(Rname, Fields, L),
-		    f_info_1(Rname, L)]
+		    f_info_1(Rname, Acc, L)]
 	   end, Acc#pass1.exports))] ++ version_accessors(L, Acc)).
 
 get_flds(Rname, #pass1{records = Rs}) ->
@@ -814,19 +1013,25 @@ f_fromlist(Acc, L) ->
 	  R <- Acc#pass1.exports]}
     ].
 
-f_info_1(Rname, L) ->
-    {function, L, fname(info, Rname), 1,
-     [{clause, L, [{atom, L, fields}], [],
-       [{call, L, {atom, L, record_info},
-	 [{atom, L, fields}, {atom, L, Rname}]}]
-      },
-      {clause, L, [{atom, L, size}], [],
-       [{call, L, {atom, L, record_info},
-	 [{atom, L, size}, {atom, L, Rname}]}]
-      }]}.
+f_info_1(Rname, Acc, L) ->
+    Fname = fname(info, Rname),
+    Flds = get_flds(Rname, Acc),
+    [funspec(L, Fname, [{[t_atom(L, fields)],
+			 t_list(L, [t_union(L, [t_atom(L,F) || F <- Flds])])},
+			{[t_atom(L, size)], t_integer(L, length(Flds))}]),
+     {function, L, Fname, 1,
+      [{clause, L, [{atom, L, fields}], [],
+	[{call, L, {atom, L, record_info},
+	  [{atom, L, fields}, {atom, L, Rname}]}]
+       },
+       {clause, L, [{atom, L, size}], [],
+	[{call, L, {atom, L, record_info},
+	  [{atom, L, size}, {atom, L, Rname}]}]
+       }]}
+    ].
 
-f_info_1(Rname, L, V) ->
-    f_info_1(recname(Rname, V), L).
+f_info_1(Rname, Acc, L, V) ->
+    f_info_1(recname(Rname, V), Acc, L).
 
 recname(Rname, V) ->
     list_to_atom(lists:concat([Rname,"__",V])).
