@@ -64,7 +64,7 @@ As an example, consider the following module:
   -record(r,{a = 0 :: integer(),b = 0 :: integer(),c = 0 :: integer()}).
   -record(s,{a}).
   -export_records([r,s]).
-  -export(['#exported-records'/0,
+  -export(['#exported_records-'/0,
            '#new-'/1,
            '#info-'/1,
            '#info-'/2,
@@ -96,8 +96,8 @@ As an example, consider the following module:
   -type '#prop-s'() :: {a, any()}.
   -type '#attr-s'() :: a.
  
-  -spec '#exported-records'() -> [r | s].
-  '#exported-records'() ->
+  -spec '#exported_records-'() -> [r | s].
+  '#exported_records-'() ->
       [r,s].
  
   -spec '#new-'(r) -> #r{};
@@ -322,6 +322,58 @@ As an example, consider the following module:
       {new,'#new-r'([])}.
  
   </pre>
+
+
+
+It is possible to modify the naming rules of exprecs, through the use  
+of the following attributes (example reflecting the current rules):
+
+<pre>
+  -exprecs_prefix(["#", operation, "-"]).
+  -exprecs_fname([prefix, record]).
+  -exprecs_vfname([fname, "__", version]).
+  </pre>
+
+The lists must contain strings or any of the following control atoms:
+
+* in `exprecs_prefix`: `operation`
+
+* in `exprecs_fname`: `operation`, `record`, `prefix`
+
+* in `exprecs_vfname`: `operation`, `record`, `prefix`, `fname`, `version`
+
+
+
+
+
+Exprecs will substitute the control atoms with the string values of the  
+corresponding items. The result will then be flattened and converted to an  
+atom (a valid function or type name).
+
+`operation` is one of:
+
+* `new`
+
+* `get`
+
+* `set`
+
+* `fromlist`
+
+* `info`
+
+* `pos`
+
+* `is_record`
+
+* `convert`
+
+* `prop`
+
+* `attr`
+
+
+
 <a name="types"></a>
 
 ##Data Types##

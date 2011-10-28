@@ -10,7 +10,7 @@ test: $(APPLICATION) $(TEST_BEAMS) ../util/run_test.beam
 	@echo Running tests
 	@erl -pa ../util/ -pa ../ebin/ -pa test/ -noinput -s run_test run
 
-test_exprecs.beam: ../ebin/exprecs.beam
+test_exprecs.beam: ../ebin/exprecs.beam test_exprecs.erl
 	@echo Compiling test_exprecs.erl
 	@erlc +debug_info -pa ../ebin -pa . -I ../include test_exprecs.erl
 
