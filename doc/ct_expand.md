@@ -1,9 +1,6 @@
-Module ct_expand
-================
 
 
-<h1>Module ct_expand</h1>
-
+#Module ct_expand#
 * [Description](#description)
 * [Data Types](#types)
 * [Function Index](#index)
@@ -14,10 +11,9 @@ Compile-time expansion utility.
 
 
 
-__Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-solutions.com`](mailto:ulf.wiger@erlang-solutions.com)).
+__Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-solutions.com`](mailto:ulf.wiger@erlang-solutions.com)).<a name="description"></a>
 
-<h2><a name="description">Description</a></h2>
-
+##Description##
 
 
 
@@ -38,16 +34,14 @@ For example, the line
 
 would be expanded at compile-time to `[1,2,3,4,5]`.
 
+<a name="types"></a>
+
+##Data Types##
 
 
-<h2><a name="types">Data Types</a></h2>
 
 
-
-
-
-<h3 class="typedecl"><a name="type-form">form()</a></h3>
-
+###<a name="type-form">form()</a>##
 
 
 
@@ -55,44 +49,39 @@ would be expanded at compile-time to `[1,2,3,4,5]`.
 
 
 
-<h3 class="typedecl"><a name="type-forms">forms()</a></h3>
+###<a name="type-forms">forms()</a>##
 
 
 
-
-<pre>forms() = [<a href="#type-form">form()</a>]</pre>
-
+<pre>forms() = [[form()](#type-form)]</pre>
 
 
-<h3 class="typedecl"><a name="type-options">options()</a></h3>
 
+###<a name="type-options">options()</a>##
 
 
 
 <pre>options() = [{atom(), any()}]</pre>
+<a name="index"></a>
 
-
-<h2><a name="index">Function Index</a></h2>
-
+##Function Index##
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#parse_transform-2">parse_transform/2</a></td><td></td></tr></table>
 
 
+<a name="functions"></a>
 
-
-<h2><a name="functions">Function Details</a></h2>
-
+##Function Details##
 
 <a name="parse_transform-2"></a>
 
-<h3>parse_transform/2</h3>
+###parse_transform/2##
 
 
 
 
-
-<pre>parse_transform(Forms::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>) -> <a href="#type-forms">forms()</a></pre>
+<pre>parse_transform(Forms::[forms()](#type-forms), Options::[options()](#type-options)) -&gt; [forms()](#type-forms)</pre>
 <br></br>
 
 

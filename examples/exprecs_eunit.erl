@@ -8,6 +8,7 @@ module_test() ->
     M = test_exprecs,
     RecNames = lists:concat(
 		 [Rs || {export_records, Rs} <- M:module_info(attributes)]),
+    io:fwrite("RecNames = ~p~n", [RecNames]),
     false = M:'#is_record-'([]),
     false = M:'#is_record-'([], []),
     [test_record(R, M) || R <- RecNames].
@@ -30,4 +31,4 @@ test_record(R, M) ->
     ?assertError(bad_record_op, M:'#get-'(17,Rec1)),
     PosL = lists:seq(2, FieldCount + 1),
     PosL = [M:'#pos-'(R, A) || A <- Fields],
-    ?assertEqual(0, M:'#pos-'(R, 17)).
+    ?assertEqual(0, M:'#pos-'(R, bad_attr_name)).

@@ -24,7 +24,7 @@
 %%%-------------------------------------------------------------------
 
 %%% @doc Parse transform for code generation pseduo functions
-%%% 
+%%%
 %%% <p>...</p>
 %%%
 %%% @end
@@ -42,8 +42,8 @@
 %% representing the abstract form of that code.
 %%
 %% The purpose of these functions is to let the programmer write
-%% the actual code that is to be generated, rather than manually 
-%% writing abstract forms, which is more error prone and cannot be 
+%% the actual code that is to be generated, rather than manually
+%% writing abstract forms, which is more error prone and cannot be
 %% checked by the compiler until the generated module is compiled.
 %%
 %% Supported functions:
@@ -55,16 +55,16 @@
 %% Substitutes the abstract code for a function with name `Name'
 %% and the same behaviour as `Fntun'.
 %%
-%% `Fun' can either be a anonymous `fun', which is then converted to 
-%% a named function. It can also be an `implicit fun', e.g. 
+%% `Fun' can either be a anonymous `fun', which is then converted to
+%% a named function. It can also be an `implicit fun', e.g.
 %% `fun is_member/2'. In this case, the referenced function is fetched
-%% and converted to an abstract form representation. It is also renamed 
+%% and converted to an abstract form representation. It is also renamed
 %% so that the generated function has the name `Name'.
 %%
 %% <h2>gen_functions/1</h2>
 %%
 %% Takes a list of `{Name, Fun}' tuples and produces a list of abstract
-%% data objects, just as if one had written 
+%% data objects, just as if one had written
 %% `[codegen:gen_function(N1,F1),codegen:gen_function(N2,F2),...]'.
 %%
 %% <h2>exprs/1</h2>
@@ -78,7 +78,7 @@
 %% used to ensure that all necessary variables are known to the compiler.
 %%
 %% <h2>Variable substitution</h2>
-%% 
+%%
 %% It is possible to do some limited expansion (importing a value
 %% bound at compile-time), using the construct <code>{'$var', V}</code>, where
 %% `V' is a bound variable in the scope of the call to `gen_function/2'.
@@ -89,7 +89,7 @@
 %%    codegen:gen_function(Name, fun(L) -> lists:member({'$var',X}, L) end).
 %% </pre>
 %%
-%% After transformation, calling `gen(contains_17, 17)' will yield the 
+%% After transformation, calling `gen(contains_17, 17)' will yield the
 %% abstract form corresponding to:
 %% <pre>
 %% contains_17(L) ->
@@ -122,7 +122,7 @@ parse_transform(Forms, Options) ->
     parse_trans:revert(NewForms).
 
 xform_fun(application, Form, _Ctxt, Acc) ->
-    MFA = erl_syntax_lib:analyze_application(Form), 
+    MFA = erl_syntax_lib:analyze_application(Form),
     case MFA of
 	{codegen, {gen_function, 2}} ->
 	    [NameF, FunF] =
@@ -190,8 +190,6 @@ find_function(Name, Arity, Forms) ->
 abstract_clauses(ClauseForms) ->
     Abstract = erl_parse:abstract(parse_trans:revert(ClauseForms)),
     substitute(Abstract).
-    
-
 
 substitute({tuple,L0,
 	    [{atom,_,tuple},

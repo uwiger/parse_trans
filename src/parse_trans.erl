@@ -20,13 +20,13 @@
 %%% File    : parse_trans.erl
 %%% @author  : Ulf Wiger <ulf.wiger@erlang-consulting.com>
 %%% @end
-%%% Description : 
+%%% Description :
 %%%
 %%% Created : 13 Feb 2006 by Ulf Wiger <ulf.wiger@erlang-consulting.com>
 %%%-------------------------------------------------------------------
 
 %%% @doc Generic parse transform library for Erlang.
-%%% 
+%%%
 %%% <p>...</p>
 %%%
 %%% @end
@@ -53,7 +53,9 @@
 	 top/3
         ]).
 
--export([do_insert_forms/4]).
+-export([do_insert_forms/4,
+	 replace_function/4,
+	 export_function/3]).
 
 -export([
          context/2,
@@ -88,7 +90,8 @@
 
 -define(ERROR(R, F, I),
         begin
-            rpt_error(R, F, I),
+	    Trace = erlang:get_stacktrace(),
+            rpt_error(R, F, I, Trace),
             throw({error,get_pos(I),{unknown,R}})
         end).
 
@@ -106,7 +109,7 @@
 				 {form(), Acc}
 				     | {forms(), form(), forms(), Acc}).
 -type insp_f()  :: fun((type(), form(), #context{}, A) -> {boolean(), A}).
-                              
+
 
 %%% @spec (Reason, Form, Info) -> throw()
 %%% Info = [{Key,Value}]
@@ -118,14 +121,14 @@
 -spec error(string(), any(), [{any(),any()}]) ->
     none().
 error(R, F, I) ->
-    rpt_error(R, F, I),
+    rpt_error(R, F, I, erlang:get_stacktrace()),
     throw({error,get_pos(I),{unknown,R}}).
 
 
 %% @spec (list()) -> integer()
 %%
 %% @doc
-%% Tries to retrieve the line number from an erl_syntax form. Returns a 
+%% Tries to retrieve the line number from an erl_syntax form. Returns a
 %% (very high) dummy number if not successful.
 %% @end
 %%
@@ -211,7 +214,7 @@ function_exists(Fname, Arity, Forms) ->
 %%%
 %%% @doc
 %%% Initializes a context record. When traversing through the form
-%%% list, the context is updated to reflect the current function and 
+%%% list, the context is updated to reflect the current function and
 %%% arity. Static elements in the context are the file name, the module
 %%% name and the options passed to the transform function.
 %%% @end
@@ -278,6 +281,25 @@ top(F, Forms, Options) ->
 	throw:{error, Ln, What} ->
 	    {error, [{File, [{Ln, ?MODULE, What}]}], []}
     end.
+
+replace_function(F, Arity, NewForm, Forms) ->
+    {NewForms, _} =
+	do_transform(
+	  fun(function, Form, _Ctxt, Acc) ->
+		  case erl_syntax:revert(Form) of
+		      {function, _, F, Arity, _} ->
+			  {NewForm, false, Acc};
+		      _ ->
+			  {Form, false, Acc}
+		  end;
+	     (_, Form, _Ctxt, Acc) ->
+		  {Form, false, Acc}
+	  end, false, Forms, initial_context(Forms, [])),
+    revert(NewForms).
+
+export_function(F, Arity, Forms) ->
+    do_insert_forms(above, [{attribute, 1, export, [{F, Arity}]}], Forms,
+		    initial_context(Forms, [])).
 
 -spec do_insert_forms(above | below, forms(), forms(), #context{}) ->
     forms().
@@ -359,7 +381,6 @@ outfile(File, Type) ->
 
 ext(pp)    -> ".xfm";
 ext(forms) -> ".xforms".
-    
 
 %% @spec (Forms, Out::filename()) -> ok
 %%
@@ -387,7 +408,7 @@ pp_beam(Beam) ->
 %% @spec (Beam::filename(), Out::filename()) -> ok | {error, Reason}
 %%
 %% @doc
-%% Reads debug_info from the beam file Beam and pretty-prints it as 
+%% Reads debug_info from the beam file Beam and pretty-prints it as
 %% Erlang source code, storing it in the file Out.
 %% @end
 %%
@@ -419,7 +440,7 @@ get_orig_syntax_tree(File) ->
 %%%
 %%% @doc Reverts back from Syntax Tools format to Erlang forms.
 %%% <p>Note that the Erlang forms are a subset of the Syntax Tools
-%%% syntax tree, so this function is safe to call even on a list of 
+%%% syntax tree, so this function is safe to call even on a list of
 %%% regular Erlang forms.</p>
 %%% @end
 %%%
@@ -431,7 +452,7 @@ revert(Tree) ->
 
 %%% @spec (Attr, Context) -> any()
 %%% Attr = module | function | arity | options
-%%% 
+%%%
 %%% @doc
 %%% Accessor function for the Context record.
 %%% @end
@@ -448,7 +469,7 @@ context(options,  #context{options = O} ) -> O.
     term().
 do_inspect(F, Acc, Forms, Context) ->
 %%    io:fwrite("do_inspect/4~n", []),
-    F1 = 
+    F1 =
         fun(Form, Acc0) ->
                 Type = type(Form),
                 {Recurse, Acc1} = apply_F(F, Type, Form, Context, Acc0),
@@ -505,7 +526,6 @@ do_depth_first(F, Acc, Forms, Context) ->
                 this_form_df(F, NewForm, Context, NewAcc)
         end,
     mapfoldl(F1, Acc, Forms).
-    
 
 enter_subtrees(Form, F, Context, Acc, Recurse) ->
     case erl_syntax:subtrees(Form) of
@@ -540,9 +560,6 @@ this_form_df(F, Form, Context, Acc) ->
         {_Be1, _F1, _Af1, _Ac1} = Res1 ->
             Res1
     end.
-    
-                                               
-                
 
 apply_F(F, Type, Form, Context, Acc) ->
     try F(Type, Form, Context, Acc)
@@ -588,13 +605,14 @@ mapfoldl(F, Accu0, [Hd|Tail]) ->
 mapfoldl(F, Accu, []) when is_function(F, 2) -> {[], Accu}.
 
 
-rpt_error(Reason, Fun, Info) ->
+rpt_error(Reason, Fun, Info, Trace) ->
     Fmt = lists:flatten(
 	    ["*** ERROR in parse_transform function:~n"
 	     "*** Reason     = ~p~n",
              "*** Location: ~p~n",
+	     "*** Trace: ~p~n",
 	     ["*** ~10w = ~p~n" || _ <- Info]]),
-    Args = [Reason, Fun | 
+    Args = [Reason, Fun, Trace |
 	    lists:foldr(
 	      fun({K,V}, Acc) ->
 		      [K, V | Acc]
