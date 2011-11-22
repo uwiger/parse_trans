@@ -627,7 +627,7 @@ get_flds(Rname, #pass1{records = Rs}) ->
 fname_prefix(Op, #pass1{prefix = Pat}) ->
     lists:flatten(
       lists:map(fun(operation) -> str(Op);
-		   (X) -> X
+		   (X) -> str(X)
 		end, Pat)).
 %% fname_prefix(Op, #pass1{} = Acc) ->
 %%     case Op of
@@ -659,10 +659,10 @@ fname(Op, Rname, #pass1{fname = FPat} = Acc) ->
     Prefix = fname_prefix(Op, Acc),
     list_to_atom(
       lists:flatten(
-	lists:map(fun(prefix) -> Prefix;
+	lists:map(fun(prefix) -> str(Prefix);
 		     (record) -> str(Rname);
 		     (operation) -> str(Op);
-		     (X) -> X
+		     (X) -> str(X)
 		  end, FPat))).
     %% list_to_atom(fname_prefix(Op, Rname, Acc)).
 
@@ -672,8 +672,9 @@ fname(Op, Rname, V, #pass1{vfname = VPat} = Acc) ->
 	lists:map(fun(prefix) -> fname_prefix(Op, Acc);
 		     (operation) -> str(Op);
 		     (record) -> str(Rname);
-		     (version) -> V;
-		     (fname) -> fname(Op, Rname, Acc)
+		     (version) -> str(V);
+		     (fname) -> str(fname(Op, Rname, Acc));
+		     (X) -> str(X)
 		  end, VPat))).
     %% list_to_atom(fname_prefix(Op, Rname, Acc) ++ "__" ++ V).
 
@@ -1120,19 +1121,13 @@ f_convert(_Vsns, L, Acc) ->
          {call, L, {atom, L, size},
           [{var, L, 'Rec'}]}},
         %%
-        {match, L, {var, L, 'Old_fields'},
-         {call, L, {atom,L,fname(info, Acc)},
-            [{var,L,'Rname'},{atom,L,fields},{var,L,'FromVsn'}]}},
+        %% {match, L, {var, L, 'Old_fields'},
+        %%  {call, L, {atom,L,fname(info, Acc)},
+        %%     [{var,L,'Rname'},{atom,L,fields},{var,L,'FromVsn'}]}},
         {match, L, {var, L, 'New_fields'},
          {call, L, {atom,L,fname(info, Acc)},
             [{var,L,'Rname'},{atom,L,fields}]}},
-        {match, L, {var, L, 'Common_fields'},
-         {op, L, '--',
-          {var, L, 'Old_fields'},
-          {op, L, '--',
-           {var, L, 'Old_fields'},
-           {var, L, 'New_fields'}}}},
-        %%
+
         {match, L, {var, L, 'Values'},
          {call, L, {remote, L, {atom, L, lists}, {atom, L, zip}},
           [{call, L, {atom,L,fname(info, Acc)},
