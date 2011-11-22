@@ -495,16 +495,21 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
     {[], Form,
      [{attribute,L,export,Exports}],
      false, Acc#pass1{inserted = true}};
-generate_f(function, Form, _Context, #pass1{exports = [_|_] = Es,
-					    record_types = Ts,
-					    generated = false} = Acc) ->
+generate_f(function, Form, _Context, #pass1{generated = false} = Acc) ->
     % Layout record funs before first function
     L = erl_syntax:get_pos(Form),
-    Specs = generate_specs(L, [{R,T} || {R,T} <- Ts, lists:member(R, Es)], Acc),
-    Funs = generate_accessors(L, Acc),
-    {Specs ++ Funs, Form, [], false, Acc#pass1{generated = true}};
+    Forms = generate_specs_and_accessors(L, Acc),
+    {Forms, Form, [], false, Acc#pass1{generated = true}};
 generate_f(_Type, Form, _Ctxt, Acc) ->
     {Form, false, Acc}.
+
+generate_specs_and_accessors(L, #pass1{exports = [_|_] = Es,
+				       record_types = Ts} = Acc) ->
+    Specs = generate_specs(L, [{R,T} || {R,T} <- Ts, lists:member(R, Es)], Acc),
+    Funs = generate_accessors(L, Acc),
+    Specs ++ Funs;
+generate_specs_and_accessors(_, _) ->
+    [].
 
 verify_generated(Forms, #pass1{} = Acc, _Context) ->
     case (Acc#pass1.generated == true) orelse (Acc#pass1.exports == []) of
@@ -514,7 +519,7 @@ verify_generated(Forms, #pass1{} = Acc, _Context) ->
 	    % should be re-written to use the parse_trans helper...?
 	    [{eof,Last}|RevForms] = lists:reverse(Forms),
 	    [{function, NewLast, _, _, _}|_] = RevAs =
-		lists:reverse(generate_accessors(Last, Acc)),
+		lists:reverse(generate_specs_and_accessors(Last, Acc)),
 	    lists:reverse([{eof, NewLast+1} | RevAs] ++ RevForms)
     end.
 
