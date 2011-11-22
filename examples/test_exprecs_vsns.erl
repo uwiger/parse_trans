@@ -18,6 +18,6 @@ f() ->
 	      ['#info-r__1_2'(fields)]),
     io:fwrite("'#convert-'(\"1_1\", {r,1,2,3,4}) -> ~p~n",
 	      ['#convert-'("1_1", {r,1,2,3,4})]),
-    io:fwrite("'#convert-'(\"1_1\", {r,1,2,3,4}) -> ~p~n",
+    io:fwrite("'#convert-'(\"1_2\", {r,1,2}) -> ~p~n",
 	      ['#convert-'("1_2", {r,1,2})]).
 
