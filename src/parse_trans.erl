@@ -33,6 +33,8 @@
 
 -module(parse_trans).
 
+-export([plain_transform/2]).
+
 -export([
          inspect/4,
 	 transform/4,
@@ -123,6 +125,65 @@
 error(R, F, I) ->
     rpt_error(R, F, I, erlang:get_stacktrace()),
     throw({error,get_pos(I),{unknown,R}}).
+
+%% @spec plain_transform(Fun, Forms) -> forms()
+%% Fun = function()
+%% Forms = forms()
+%%
+%% @doc
+%% Performs a transform of `Forms' using the fun `Fun(Form)'. `Form' is always
+%% an Erlang abstract form, i.e. it is not converted to syntax_tools
+%% representation. The intention of this transform is for the fun to have a
+%% catch-all clause returning `continue'. This will ensure that it stays robust
+%% against additions to the language.
+%%
+%% `Fun(Form)' must return either of the following:
+%%
+%% * `continue' - dig into the sub-expressions of the form
+%% * `{done, NewForm}' - Replace `Form' with `NewForm'; return all following
+%%   forms unchanged
+%% * `{error, Reason}' - Abort transformation with an error message.
+%%
+%% Example - This transform fun would convert all instances of `P ! Msg' to
+%% `gproc:send(P, Msg)':
+%% <pre>
+%% parse_transform(Forms, _Options) -&gt;
+%%     parse_trans:plain_transform(fun do_transform/1, Forms).
+%%
+%% do_transform({'op', L, '!', Lhs, Rhs}) -&gt;
+%%      [NewLhs] = parse_trans:plain_transform(fun do_transform/1, [Lhs]),
+%%      [NewRhs] = parse_trans:plain_transform(fun do_transform/1, [Rhs]),
+%%     {call, L, {remote, L, {atom, L, gproc}, {atom, L, send}},
+%%      [NewLhs, NewRhs]};
+%% do_transform(_) -&gt;
+%%     continue.
+%% </pre>
+%% @end
+%%
+plain_transform(Fun, Forms) when is_function(Fun, 1), is_list(Forms) ->
+    plain_transform1(Fun, Forms).
+
+plain_transform1(_, []) ->
+    [];
+plain_transform1(Fun, [F|Fs]) when is_atom(element(1,F)),
+				   is_integer(element(2,F)) ->
+    case Fun(F) of
+	continue ->
+	    [list_to_tuple(plain_transform1(Fun, tuple_to_list(F))) |
+	     plain_transform1(Fun, Fs)];
+	{done, NewF} ->
+	    [NewF | Fs];
+	{error, Reason} ->
+	    error(Reason, F, [{form, F}]);
+	NewF when is_tuple(NewF) ->
+	    [NewF | plain_transform1(Fun, Fs)]
+    end;
+plain_transform1(Fun, [L|Fs]) when is_list(L) ->
+    [plain_transform1(Fun, L) | plain_transform1(Fun, Fs)];
+plain_transform1(Fun, [F|Fs]) ->
+    [F | plain_transform1(Fun, Fs)];
+plain_transform1(_, F) ->
+    F.
 
 
 %% @spec (list()) -> integer()

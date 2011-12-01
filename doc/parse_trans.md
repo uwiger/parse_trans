@@ -93,7 +93,8 @@ Returns the name of the file being compiled.</td></tr><tr><td valign="top"><a hr
 Returns the name of the module being compiled.</td></tr><tr><td valign="top"><a href="#get_orig_syntax_tree-1">get_orig_syntax_tree/1</a></td><td>.</td></tr><tr><td valign="top"><a href="#get_pos-1">get_pos/1</a></td><td>
 Tries to retrieve the line number from an erl_syntax form.</td></tr><tr><td valign="top"><a href="#initial_context-2">initial_context/2</a></td><td>
 Initializes a context record.</td></tr><tr><td valign="top"><a href="#inspect-4">inspect/4</a></td><td>
-Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).</td></tr><tr><td valign="top"><a href="#optionally_pretty_print-3">optionally_pretty_print/3</a></td><td></td></tr><tr><td valign="top"><a href="#pp_beam-1">pp_beam/1</a></td><td>
+Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).</td></tr><tr><td valign="top"><a href="#optionally_pretty_print-3">optionally_pretty_print/3</a></td><td></td></tr><tr><td valign="top"><a href="#plain_transform-2">plain_transform/2</a></td><td>
+Performs a transform of <code>Forms</code> using the fun <code>Fun(Form)</code>.</td></tr><tr><td valign="top"><a href="#pp_beam-1">pp_beam/1</a></td><td>
 Reads debug_info from the beam file Beam and returns a string containing
 the pretty-printed corresponding erlang source code.</td></tr><tr><td valign="top"><a href="#pp_beam-2">pp_beam/2</a></td><td>
 Reads debug_info from the beam file Beam and pretty-prints it as
@@ -338,7 +339,52 @@ Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).<a name="o
 <br></br>
 
 
-<a name="pp_beam-1"></a>
+<a name="plain_transform-2"></a>
+
+###plain_transform/2##
+
+
+
+
+<pre>plain_transform(Fun, Forms) -&gt; [forms()](#type-forms)</pre>
+<ul class="definitions"><li><pre>Fun = function()</pre></li><li><pre>Forms = &lt;a href="#type-forms"&gt;forms()&lt;/a&gt;</pre></li></ul>
+
+
+
+
+
+
+Performs a transform of `Forms` using the fun `Fun(Form)`. `Form` is always
+an Erlang abstract form, i.e. it is not converted to syntax_tools
+representation. The intention of this transform is for the fun to have a
+catch-all clause returning `continue`. This will ensure that it stays robust  
+against additions to the language.
+
+
+
+`Fun(Form)` must return either of the following:
+
+
+
+* `continue` - dig into the sub-expressions of the form
+* `{done, NewForm}` - Replace `Form` with `NewForm`; return all following
+forms unchanged
+* `{error, Reason}` - Abort transformation with an error message.
+
+Example - This transform fun would convert all instances of `P ! Msg` to
+`gproc:send(P, Msg)`:
+<pre>
+  parse_transform(Forms, _Options) ->
+      parse_trans:plain_transform(fun do_transform/1, Forms).
+ 
+  do_transform({'op', L, '!', Lhs, Rhs}) ->
+       [NewLhs] = parse_trans:plain_transform(fun do_transform/1, [Lhs]),
+       [NewRhs] = parse_trans:plain_transform(fun do_transform/1, [Rhs]),
+      {call, L, {remote, L, {atom, L, gproc}, {atom, L, send}},
+       [NewLhs, NewRhs]};
+  do_transform(_) ->
+      continue.
+  </pre><a name="pp_beam-1"></a>
 
 ###pp_beam/1##
 
