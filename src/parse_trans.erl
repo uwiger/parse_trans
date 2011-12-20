@@ -165,8 +165,7 @@ plain_transform(Fun, Forms) when is_function(Fun, 1), is_list(Forms) ->
 
 plain_transform1(_, []) ->
     [];
-plain_transform1(Fun, [F|Fs]) when is_atom(element(1,F)),
-				   is_integer(element(2,F)) ->
+plain_transform1(Fun, [F|Fs]) when is_atom(element(1,F)) ->
     case Fun(F) of
 	continue ->
 	    [list_to_tuple(plain_transform1(Fun, tuple_to_list(F))) |
