@@ -567,7 +567,8 @@ do_transform(F, Acc, Forms, Context) ->
                     this_form_rec(F, Form, Context, Acc0),
                 if Recurse ->
                         {NewForm, NewAcc} =
-                            enter_subtrees(Form1, F, Context, Acc1, Rec),
+                            enter_subtrees(Form1, F,
+                                update_context(Form1, Context), Acc1, Rec),
                         {Before1, NewForm, After1, NewAcc};
                    true ->
                         {Before1, Form1, After1, Acc1}
