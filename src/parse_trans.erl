@@ -94,7 +94,7 @@
         begin
 	    Trace = erlang:get_stacktrace(),
             rpt_error(R, F, I, Trace),
-            throw({error,get_pos(I),{unknown,R}})
+            throw({error,get_pos(I),{R, Trace}})
         end).
 
 -export_type([forms/0]).
@@ -123,8 +123,8 @@
 -spec error(string(), any(), [{any(),any()}]) ->
     none().
 error(R, F, I) ->
-    rpt_error(R, F, I, erlang:get_stacktrace()),
-    throw({error,get_pos(I),{unknown,R}}).
+    % rpt_error(R, F, I, erlang:get_stacktrace()),
+    throw({error,get_pos(I),{R, erlang:get_stacktrace()}}).
 
 %% @spec plain_transform(Fun, Forms) -> forms()
 %% Fun = function()
@@ -139,6 +139,7 @@ error(R, F, I) ->
 %%
 %% `Fun(Form)' must return either of the following:
 %%
+%% * `NewForm' - any valid form
 %% * `continue' - dig into the sub-expressions of the form
 %% * `{done, NewForm}' - Replace `Form' with `NewForm'; return all following
 %%   forms unchanged
@@ -308,19 +309,23 @@ depth_first(Fun, Acc, Forms, Options) when is_function(Fun, 4) ->
     do(fun do_depth_first/4, Fun, Acc, Forms, Options).
 
 do(Transform, Fun, Acc, Forms, Options) ->
-    Context = initial_context(Forms, Options),
-    File = Context#context.file,
-    try Transform(Fun, Acc, Forms, Context) of
-	{NewForms, _} = Result when is_list(NewForms) ->
-            optionally_pretty_print(NewForms, Options, Context),
-            Result
-    catch
-        error:Reason ->
-            {error,
-             [{File, [{?DUMMY_LINE, ?MODULE,
-                       {Reason, erlang:get_stacktrace()}}]}]};
-	throw:{error, Ln, What} ->
-	    {error, [{File, [{Ln, ?MODULE, What}]}], []}
+    case [E || {error,_} = E <- Forms] of
+	[_|_] -> {error, []};
+	[] ->
+	    Context = initial_context(Forms, Options),
+	    File = Context#context.file,
+	    try Transform(Fun, Acc, Forms, Context) of
+		{NewForms, _} = Result when is_list(NewForms) ->
+		    optionally_pretty_print(NewForms, Options, Context),
+		    Result
+	    catch
+		error:Reason ->
+		    {error,
+		     [{File, [{?DUMMY_LINE, ?MODULE,
+			       {Reason, erlang:get_stacktrace()}}]}]};
+		throw:{error, Ln, What} ->
+		    {error, [{error, {Ln, ?MODULE, What}}]}
+	    end
     end.
 
 -spec top(function(), forms(), list()) ->
@@ -631,7 +636,8 @@ apply_F(F, Type, Form, Context, Acc) ->
                     {context, Context},
                     {acc, Acc},
                     {apply_f, F},
-                    {form, Form}])
+                    {form, Form}]
+		  ++ [{stack, erlang:get_stacktrace()}])
     end.
 
 
@@ -665,21 +671,32 @@ mapfoldl(F, Accu0, [Hd|Tail]) ->
 mapfoldl(F, Accu, []) when is_function(F, 2) -> {[], Accu}.
 
 
-rpt_error(Reason, Fun, Info, Trace) ->
-    Fmt = lists:flatten(
-	    ["*** ERROR in parse_transform function:~n"
-	     "*** Reason     = ~p~n",
-             "*** Location: ~p~n",
-	     "*** Trace: ~p~n",
-	     ["*** ~10w = ~p~n" || _ <- Info]]),
-    Args = [Reason, Fun, Trace |
-	    lists:foldr(
-	      fun({K,V}, Acc) ->
-		      [K, V | Acc]
-	      end, [], Info)],
-    io:format(Fmt, Args).
+rpt_error(_Reason, _Fun, _Info, _Trace) ->
+    %% Fmt = lists:flatten(
+    %% 	    ["*** ERROR in parse_transform function:~n"
+    %% 	     "*** Reason     = ~p~n",
+    %%          "*** Location: ~p~n",
+    %% 	     "*** Trace: ~p~n",
+    %% 	     ["*** ~10w = ~p~n" || _ <- Info]]),
+    %% Args = [Reason, Fun, Trace |
+    %% 	    lists:foldr(
+    %% 	      fun({K,V}, Acc) ->
+    %% 		      [K, V | Acc]
+    %% 	      end, [], Info)],
+    %%io:format(Fmt, Args),
+    ok.
 
 -spec format_error({atom(), term()}) ->
     iolist().
-format_error({_Cat, Error}) ->
-    Error.
+format_error({E, [{M,F,A}|_]} = Error) ->
+    try lists:flatten(io_lib:fwrite("~p in ~s:~s/~s", [E, atom_to_list(M),
+						       atom_to_list(F), integer_to_list(A)]))
+    catch
+	error:_ ->
+	    format_error_(Error)
+    end;
+format_error(Error) ->
+    format_error_(Error).
+
+format_error_(Error) ->
+    lists:flatten(io_lib:fwrite("~p", [Error])).

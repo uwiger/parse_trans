@@ -39,6 +39,17 @@
 %%
 %% would be expanded at compile-time to `[1,2,3,4,5]'.
 %%
+%% ct_expand has now been extended to also evaluate calls to local functions.
+%% See examples/ct_expand_test.erl for some examples, and also limitations.
+%% Specifically, using functions that return funs, that are then passed to other
+%% functions, doesn't work.
+%%
+%% A debugging facility exists: passing the option {ct_expand_trace, Flags} as an option,
+%% or adding a compiler attribute -ct_expand_trace(Flags) will enable a form of call trace.
+%%
+%% `Flags' can be `[]' (no trace) or `[F]', where `F' is `c' (call trace),
+%% `r' (return trace), or `x' (exception trace)'.
+%%
 %% @end
 -module(ct_expand).
 -export([parse_transform/2]).
@@ -51,18 +62,39 @@
 -spec parse_transform(forms(), options()) ->
     forms().
 parse_transform(Forms, Options) ->
-    {NewForms,_} =
-        parse_trans:depth_first(fun xform_fun/4, [], Forms, Options),
-    parse_trans:revert(NewForms).
+    Trace = ct_trace_opt(Options, Forms),
+    case parse_trans:depth_first(fun(T,F,C,A) ->
+					 xform_fun(T,F,C,A,Forms, Trace)
+				 end, [], Forms, Options) of
+	{error, Es} ->
+	    Es ++ Forms;
+	{NewForms, _} ->
+	    parse_trans:revert(NewForms)
+    end.
 
+ct_trace_opt(Options, Forms) ->
+    case proplists:get_value(ct_expand_trace, Options) of
+	undefined ->
+	    case [Opt || {attribute,_,ct_expand_trace,Opt} <- Forms] of
+		[] ->
+		    [];
+		[_|_] = L ->
+		    lists:last(L)
+	    end
+    end.
 
-xform_fun(application, Form, _Ctxt, Acc) ->
+xform_fun(application, Form, _Ctxt, Acc, Forms, Trace) ->
     MFA = erl_syntax_lib:analyze_application(Form),
     case MFA of
         {?MODULE, {term, 1}} ->
-            Args = erl_syntax:application_arguments(Form),
+	    LFH = fun(Name, Args, Bs) ->
+			  eval_lfun(
+			    extract_fun(Name, length(Args), Forms),
+			    Args, Bs, Forms, Trace)
+		  end,
+	    Args = erl_syntax:application_arguments(Form),
             RevArgs = parse_trans:revert(Args),
-            case erl_eval:exprs(RevArgs, []) of
+            case erl_eval:exprs(RevArgs, [], {eval, LFH}) of
                 {value, Value,[]} ->
                     {erl_syntax:abstract(Value), Acc};
                 Other ->
@@ -73,6 +105,65 @@ xform_fun(application, Form, _Ctxt, Acc) ->
         _ ->
             {Form, Acc}
     end;
-xform_fun(_, Form, _Ctxt, Acc) ->
+xform_fun(_, Form, _Ctxt, Acc, _, _) ->
     {Form, Acc}.
 
+extract_fun(Name, Arity, Forms) ->
+    case [F_ || {function,_,N_,A_,_Cs} = F_ <- Forms,
+		N_ == Name, A_ == Arity] of
+	[] ->
+	    erlang:error({undef, [{Name, Arity}]});
+	[FForm] ->
+	    FForm
+    end.
+
+eval_lfun({function,L,F,_,Clauses}, Args, Bs, Forms, Trace) ->
+    try
+	begin
+	    {ArgsV, Bs1} = lists:mapfoldl(
+			     fun(A, Bs_) ->
+				     {value,AV,Bs1_} =
+					 erl_eval:expr(A, Bs_, lfh(Forms, Trace)),
+				     {erl_parse:abstract(AV), Bs1_}
+			     end, Bs, Args),
+	    Expr = {call, L, {'fun', L, {clauses, lfun_rewrite(Clauses, Forms)}}, ArgsV},
+	    call_trace(Trace =/= [], L, F, ArgsV),
+	    {value, Ret, _} =
+		erl_eval:expr(Expr, erl_eval:new_bindings(), lfh(Forms, Trace)),
+	    ret_trace(lists:member(r, Trace) orelse lists:member(x, Trace),
+		      L, F, Args, Ret),
+	    %% restore bindings
+	    {value, Ret, Bs1}
+	end
+    catch
+	error:Err ->
+	    exception_trace(lists:member(x, Trace), L, F, Args, Err),
+	    error(Err)
+    end.
+
+lfh(Forms, Trace) ->
+    {eval, fun(Name, As, Bs1) ->
+		   eval_lfun(
+		     extract_fun(Name, length(As), Forms),
+		     As, Bs1, Forms, Trace)
+	   end}.
+
+call_trace(false, _, _, _) -> ok;
+call_trace(true, L, F, As) ->
+    io:fwrite("ct_expand (~w): call ~w(~p)~n", [L, F, As]).
+
+ret_trace(_, _, _, _, _) -> ok.
+
+exception_trace(false, _, _, _, _) -> ok;
+exception_trace(true, L, F, Args, Err) ->
+    io:fwrite("ct_expand (~w): exception from ~w/~w: ~p~n", [L, F, length(Args), Err]).
+
+
+lfun_rewrite(Exprs, Forms) ->
+    parse_trans:plain_transform(
+      fun({'fun',L,{function,F,A}}) ->
+	      {function,_,_,_,Cs} = extract_fun(F, A, Forms),
+	      {'fun',L,{clauses, Cs}};
+	 (_) ->
+	      continue
+      end, Exprs).
