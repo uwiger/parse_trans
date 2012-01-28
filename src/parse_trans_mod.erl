@@ -58,7 +58,7 @@ abstract_code(BeamFile) ->
         {ok, {_, [{abstract_code, {raw_abstract_v1, Forms}}]}} ->
             Forms;
         {ok, {_, [{abstract_code, no_abstract_code}]}} ->
-            error(no_abstract_code)
+            erlang:error(no_abstract_code)
     end.
 
 -spec beam_file(module()) -> binary().
