@@ -98,7 +98,7 @@ xform_fun(application, Form, _Ctxt, Acc, Forms, Trace) ->
             RevArgs = parse_trans:revert(Args),
             case erl_eval:exprs(RevArgs, [], {eval, LFH}) of
                 {value, Value,[]} ->
-                    {erl_syntax:abstract(Value), Acc};
+                    {abstract(Value), Acc};
                 Other ->
                     parse_trans:error(cannot_evaluate,?LINE,
                                       [{expr, RevArgs},
@@ -126,7 +126,7 @@ eval_lfun({function,L,F,_,Clauses}, Args, Bs, Forms, Trace) ->
 			     fun(A, Bs_) ->
 				     {value,AV,Bs1_} =
 					 erl_eval:expr(A, Bs_, lfh(Forms, Trace)),
-				     {erl_parse:abstract(AV), Bs1_}
+				     {abstract(AV), Bs1_}
 			     end, Bs, Args),
 	    Expr = {call, L, {'fun', L, {clauses, lfun_rewrite(Clauses, Forms)}}, ArgsV},
 	    call_trace(Trace =/= [], L, F, ArgsV),
@@ -180,3 +180,59 @@ lfun_rewrite(Exprs, Forms) ->
 	 (_) ->
 	      continue
       end, Exprs).
+
+
+%% abstract/1 - modified from erl_eval:abstract/1:
+-type abstract_expr() :: term().
+-spec abstract(Data) -> AbsTerm when
+      Data :: term(),
+      AbsTerm :: abstract_expr().
+abstract(T) when is_function(T) ->
+    case erlang:fun_info(T, module) of
+	{module, erl_eval} ->
+	    case erl_eval:fun_data(T) of
+		{fun_data, _Imports, Clauses} ->
+		    {'fun', 0, {clauses, Clauses}};
+		false ->
+		    erlang:error(function_clause)  % mimicking erl_parse:abstract(T)
+	    end;
+	_ ->
+	    erlang:error(function_clause)
+    end;
+abstract(T) when is_integer(T) -> {integer,0,T};
+abstract(T) when is_float(T) -> {float,0,T};
+abstract(T) when is_atom(T) -> {atom,0,T};
+abstract([]) -> {nil,0};
+abstract(B) when is_bitstring(B) ->
+    {bin, 0, [abstract_byte(Byte, 0) || Byte <- bitstring_to_list(B)]};
+abstract([C|T]) when is_integer(C), 0 =< C, C < 256 ->
+    abstract_string(T, [C]);
+abstract([H|T]) ->
+    {cons,0,abstract(H),abstract(T)};
+abstract(Tuple) when is_tuple(Tuple) ->
+    {tuple,0,abstract_list(tuple_to_list(Tuple))}.
+
+abstract_string([C|T], String) when is_integer(C), 0 =< C, C < 256 ->
+    abstract_string(T, [C|String]);
+abstract_string([], String) ->
+    {string, 0, lists:reverse(String)};
+abstract_string(T, String) ->
+    not_string(String, abstract(T)).
+
+not_string([C|T], Result) ->
+    not_string(T, {cons, 0, {integer, 0, C}, Result});
+not_string([], Result) ->
+    Result.
+
+abstract_list([H|T]) ->
+    [abstract(H)|abstract_list(T)];
+abstract_list([]) ->
+    [].
+
+abstract_byte(Byte, Line) when is_integer(Byte) ->
+    {bin_element, Line, {integer, Line, Byte}, default, default};
+abstract_byte(Bits, Line) ->
+    Sz = bit_size(Bits),
+    <<Val:Sz>> = Bits,
+    {bin_element, Line, {integer, Line, Val}, {integer, Line, Sz}, default}.
+

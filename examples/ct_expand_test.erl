@@ -16,16 +16,14 @@ f() ->
 g() ->
     ct_expand:term(zip([1,2], [a,b])).
 
-%% this doesn't work: a function in the expanded expr returns a fun, which is then passed
-%% to another function. This is because erl_eval returns results as concrete terms, which
-%% must then be abstracted in order to be passed as input arguments to am interpreted
-%% function. This works most of the time, but erl_parse:abstract/1 crashes on funs.
-%%
-%% h() ->
-%%     ct_expand:term(wrap(my_fun())).
+h() ->
+    ct_expand:term(wrap(my_fun())).
+
+i() ->
+    ct_expand:term(wrap(my_fun2())).
 
 zip([H1|T1], [H2|T2]) ->
-    F = fun wrap/1,
+    F = my_fun2(),
     [{F(H1),F(H2)} | zip(T1, T2)];
 zip([], []) ->
     [].
@@ -36,3 +34,5 @@ wrap(X) ->
 my_fun() ->
     fun() -> foo end.
 
+my_fun2() ->
+    fun wrap/1.
