@@ -40,9 +40,7 @@
 %% would be expanded at compile-time to `[1,2,3,4,5]'.
 %%
 %% ct_expand has now been extended to also evaluate calls to local functions.
-%% See examples/ct_expand_test.erl for some examples, and also limitations.
-%% Specifically, using functions that return funs, that are then passed to other
-%% functions, doesn't work.
+%% See examples/ct_expand_test.erl for some examples.
 %%
 %% A debugging facility exists: passing the option {ct_expand_trace, Flags} as an option,
 %% or adding a compiler attribute -ct_expand_trace(Flags) will enable a form of call trace.
