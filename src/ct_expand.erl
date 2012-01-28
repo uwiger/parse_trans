@@ -80,7 +80,9 @@ ct_trace_opt(Options, Forms) ->
 		    [];
 		[_|_] = L ->
 		    lists:last(L)
-	    end
+	    end;
+	Flags when is_list(Flags) ->
+	    Flags
     end.
 
 xform_fun(application, Form, _Ctxt, Acc, Forms, Trace) ->
@@ -150,9 +152,20 @@ lfh(Forms, Trace) ->
 
 call_trace(false, _, _, _) -> ok;
 call_trace(true, L, F, As) ->
-    io:fwrite("ct_expand (~w): call ~w(~p)~n", [L, F, As]).
+    io:fwrite("ct_expand (~w): call ~s~n", [L, pp_function(F, As)]).
 
-ret_trace(_, _, _, _, _) -> ok.
+pp_function(F, []) ->
+    atom_to_list(F) ++ "()";
+pp_function(F, [A|As]) ->
+    lists:flatten([atom_to_list(F), "(",
+		   [io_lib:fwrite("~w", [erl_parse:normalise(A)]) |
+		    [[",", io_lib:fwrite("~w", [erl_parse:normalise(A_)])] || A_ <- As]],
+		   ")"]).
+
+ret_trace(false, _, _, _, _) -> ok;
+ret_trace(true, L, F, Args, Res) ->
+    io:fwrite("ct_expand (~w): returned from ~w/~w: ~w~n",
+	      [L, F, length(Args), Res]).
 
 exception_trace(false, _, _, _, _) -> ok;
 exception_trace(true, L, F, Args, Err) ->
