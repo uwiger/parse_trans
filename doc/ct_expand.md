@@ -32,7 +32,24 @@ For example, the line
 
 `ct_expand:term(lists:sort([3,5,2,1,4]))`
 
+
+
 would be expanded at compile-time to `[1,2,3,4,5]`.
+
+
+
+ct_expand has now been extended to also evaluate calls to local functions.  
+See examples/ct_expand_test.erl for some examples, and also limitations.  
+Specifically, using functions that return funs, that are then passed to other  
+functions, doesn't work.
+
+
+
+A debugging facility exists: passing the option {ct_expand_trace, Flags} as an option,  
+or adding a compiler attribute -ct_expand_trace(Flags) will enable a form of call trace.
+
+`Flags` can be `[]` (no trace) or `[F]`, where `F` is `c` (call trace),
+`r` (return trace), or `x` (exception trace)'.
 
 <a name="types"></a>
 
@@ -53,7 +70,7 @@ would be expanded at compile-time to `[1,2,3,4,5]`.
 
 
 
-<pre>forms() = [[form()](#type-form)]</pre>
+<pre>forms() = [<a href="#type-form">form()</a>]</pre>
 
 
 
@@ -81,7 +98,7 @@ would be expanded at compile-time to `[1,2,3,4,5]`.
 
 
 
-<pre>parse_transform(Forms::[forms()](#type-forms), Options::[options()](#type-options)) -&gt; [forms()](#type-forms)</pre>
+<pre>parse_transform(Forms::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>) -> <a href="#type-forms">forms()</a></pre>
 <br></br>
 
 

@@ -393,7 +393,7 @@ atom (a valid function or type name).
 
 
 
-<pre>forms() = [[form()](#type-form)]</pre>
+<pre>forms() = [<a href="#type-form">form()</a>]</pre>
 
 
 
@@ -421,7 +421,7 @@ atom (a valid function or type name).
 
 
 
-<pre>parse_transform(Forms::[forms()](#type-forms), Options::[options()](#type-options)) -&gt; [forms()](#type-forms)</pre>
+<pre>parse_transform(Forms::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>) -> <a href="#type-forms">forms()</a></pre>
 <br></br>
 
 

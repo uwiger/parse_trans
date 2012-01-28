@@ -48,7 +48,7 @@
 
 
 
-<pre>abstract_code(BeamFile::binary()) -&gt; [erlang_form()](#type-erlang_form)</pre>
+<pre>abstract_code(BeamFile::binary()) -> <a href="#type-erlang_form">erlang_form()</a></pre>
 <br></br>
 
 
@@ -70,7 +70,7 @@
 
 
 
-<pre>compile_and_load_forms(AbsCode::[erlang_form()](#type-erlang_form)) -&gt; ok</pre>
+<pre>compile_and_load_forms(AbsCode::<a href="#type-erlang_form">erlang_form()</a>) -> ok</pre>
 <br></br>
 
 
@@ -81,7 +81,7 @@
 
 
 
-<pre>compile_and_load_forms(AbsCode::[erlang_form()](#type-erlang_form), Opts::[compile_options()](#type-compile_options)) -&gt; ok</pre>
+<pre>compile_and_load_forms(AbsCode::<a href="#type-erlang_form">erlang_form()</a>, Opts::<a href="#type-compile_options">compile_options()</a>) -> ok</pre>
 <br></br>
 
 
@@ -92,7 +92,7 @@
 
 
 
-<pre>compile_options(BeamFile::binary() | module()) -&gt; [compile_options()](#type-compile_options)</pre>
+<pre>compile_options(BeamFile::binary() | module()) -> <a href="#type-compile_options">compile_options()</a></pre>
 <br></br>
 
 
@@ -103,7 +103,7 @@
 
 
 
-<pre>rename_module(T::[erlang_form()](#type-erlang_form), NewName::module()) -&gt; [erlang_form()](#type-erlang_form)</pre>
+<pre>rename_module(T::<a href="#type-erlang_form">erlang_form()</a>, NewName::module()) -> <a href="#type-erlang_form">erlang_form()</a></pre>
 <br></br>
 
 

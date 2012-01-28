@@ -39,7 +39,7 @@ __Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-consulting.com`](mailto:ulf.wiger@e
 
 
 
-<pre>forms() = [[form()](#type-form)]</pre>
+<pre>forms() = [<a href="#type-form">form()</a>]</pre>
 
 
 
@@ -47,7 +47,7 @@ __Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-consulting.com`](mailto:ulf.wiger@e
 
 
 
-<pre>insp_f() = fun(([type()](#type-type), [form()](#type-form), #context{}, A) -&gt; {boolean(), A})</pre>
+<pre>insp_f() = fun((<a href="#type-type">type()</a>, <a href="#type-form">form()</a>, #context{}, A) -> {boolean(), A})</pre>
 
 
 
@@ -71,7 +71,7 @@ __Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-consulting.com`](mailto:ulf.wiger@e
 
 
 
-<pre>xform_f_df() = fun(([type()](#type-type), [form()](#type-form), #context{}, Acc) -&gt; {[form()](#type-form), Acc} | {[forms()](#type-forms), [form()](#type-form), [forms()](#type-forms), Acc})</pre>
+<pre>xform_f_df() = fun((<a href="#type-type">type()</a>, <a href="#type-form">form()</a>, #context{}, Acc) -> {<a href="#type-form">form()</a>, Acc} | {<a href="#type-forms">forms()</a>, <a href="#type-form">form()</a>, <a href="#type-forms">forms()</a>, Acc})</pre>
 
 
 
@@ -79,7 +79,7 @@ __Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-consulting.com`](mailto:ulf.wiger@e
 
 
 
-<pre>xform_f_rec() = fun(([type()](#type-type), [form()](#type-form), #context{}, Acc) -&gt; {[form()](#type-form), boolean(), Acc} | {[forms()](#type-forms), [form()](#type-form), [forms()](#type-forms), boolean(), Acc})</pre>
+<pre>xform_f_rec() = fun((<a href="#type-type">type()</a>, <a href="#type-form">form()</a>, #context{}, Acc) -> {<a href="#type-form">form()</a>, boolean(), Acc} | {<a href="#type-forms">forms()</a>, <a href="#type-form">form()</a>, <a href="#type-forms">forms()</a>, boolean(), Acc})</pre>
 <a name="index"></a>
 
 ##Function Index##
@@ -126,7 +126,7 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 
 
 
-<pre>depth_first(Fun::[xform_f_df()](#type-xform_f_df), Acc, Forms::[forms()](#type-forms), Options::[options()](#type-options)) -&gt; {[forms()](#type-forms), Acc} | {error, list()}</pre>
+<pre>depth_first(Fun::<a href="#type-xform_f_df">xform_f_df()</a>, Acc, Forms::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>) -> {<a href="#type-forms">forms()</a>, Acc} | {error, list()}</pre>
 <br></br>
 
 
@@ -137,7 +137,7 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 
 
 
-<pre>do_depth_first(F::[xform_f_df()](#type-xform_f_df), Acc::term(), Forms::[forms()](#type-forms), Context::#context{}) -&gt; {[forms()](#type-forms), term()}</pre>
+<pre>do_depth_first(F::<a href="#type-xform_f_df">xform_f_df()</a>, Acc::term(), Forms::<a href="#type-forms">forms()</a>, Context::#context{}) -> {<a href="#type-forms">forms()</a>, term()}</pre>
 <br></br>
 
 
@@ -148,7 +148,7 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 
 
 
-<pre>do_insert_forms(X1::above | below, Insert::[forms()](#type-forms), Forms::[forms()](#type-forms), Context::#context{}) -&gt; [forms()](#type-forms)</pre>
+<pre>do_insert_forms(X1::above | below, Insert::<a href="#type-forms">forms()</a>, Forms::<a href="#type-forms">forms()</a>, Context::#context{}) -> <a href="#type-forms">forms()</a></pre>
 <br></br>
 
 
@@ -159,7 +159,7 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 
 
 
-<pre>do_inspect(F::[insp_f()](#type-insp_f), Acc::term(), Forms::[forms()](#type-forms), Context::#context{}) -&gt; term()</pre>
+<pre>do_inspect(F::<a href="#type-insp_f">insp_f()</a>, Acc::term(), Forms::<a href="#type-forms">forms()</a>, Context::#context{}) -> term()</pre>
 <br></br>
 
 
@@ -170,7 +170,7 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 
 
 
-<pre>do_transform(F::[xform_f_rec()](#type-xform_f_rec), Acc::term(), Forms::[forms()](#type-forms), Context::#context{}) -&gt; {[forms()](#type-forms), term()}</pre>
+<pre>do_transform(F::<a href="#type-xform_f_rec">xform_f_rec()</a>, Acc::term(), Forms::<a href="#type-forms">forms()</a>, Context::#context{}) -> {<a href="#type-forms">forms()</a>, term()}</pre>
 <br></br>
 
 
@@ -181,7 +181,7 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 
 
 
-<pre>error(R::Reason, F::Form, I::Info) -&gt; [throw()](#type-throw)</pre>
+<pre>error(R::Reason, F::Form, I::Info) -> <a href="#type-throw">throw()</a></pre>
 <ul class="definitions"><li><pre>Info = [{Key, Value}]</pre></li></ul>
 
 
@@ -205,7 +205,7 @@ Used to report errors detected during the parse transform.<a name="export_functi
 
 
 
-<pre>format_error(X1::{atom(), term()}) -&gt; iolist()</pre>
+<pre>format_error(Error::{atom(), term()}) -&gt; iolist()</pre>
 <br></br>
 
 
@@ -335,7 +335,7 @@ Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).<a name="o
 
 
 
-<pre>optionally_pretty_print(Result::[forms()](#type-forms), Options::[options()](#type-options), Context::#context{}) -&gt; ok</pre>
+<pre>optionally_pretty_print(Result::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>, Context::#context{}) -> ok</pre>
 <br></br>
 
 
@@ -346,8 +346,8 @@ Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).<a name="o
 
 
 
-<pre>plain_transform(Fun, Forms) -&gt; [forms()](#type-forms)</pre>
-<ul class="definitions"><li><pre>Fun = function()</pre></li><li><pre>Forms = &lt;a href="#type-forms"&gt;forms()&lt;/a&gt;</pre></li></ul>
+<pre>plain_transform(Fun, Forms) -> <a href="#type-forms">forms()</a></pre>
+<ul class="definitions"><li><pre>Fun = function()</pre></li><li><pre>Forms = <a href="#type-forms">forms()</a></pre></li></ul>
 
 
 
@@ -366,6 +366,7 @@ against additions to the language.
 
 
 
+* `NewForm` - any valid form
 * `continue` - dig into the sub-expressions of the form
 * `{done, NewForm}` - Replace `Form` with `NewForm`; return all following
 forms unchanged
@@ -391,7 +392,7 @@ Example - This transform fun would convert all instances of `P ! Msg` to
 
 
 
-<pre>pp_beam(Beam::[file:filename()](file.md#type-filename)) -&gt; string() | {error, Reason}</pre>
+<pre>pp_beam(Beam::<a href="file.md#type-filename">file:filename()</a>) -> string() | {error, Reason}</pre>
 <br></br>
 
 
@@ -406,7 +407,7 @@ the pretty-printed corresponding erlang source code.<a name="pp_beam-2"></a>
 
 
 
-<pre>pp_beam(Beam::[filename()](#type-filename), Out::[filename()](#type-filename)) -&gt; ok | {error, Reason}</pre>
+<pre>pp_beam(Beam::<a href="#type-filename">filename()</a>, Out::<a href="#type-filename">filename()</a>) -> ok | {error, Reason}</pre>
 <br></br>
 
 
@@ -421,7 +422,7 @@ Erlang source code, storing it in the file Out.<a name="pp_src-2"></a>
 
 
 
-<pre>pp_src(Res::Forms, Out::[filename()](#type-filename)) -&gt; ok</pre>
+<pre>pp_src(Res::Forms, Out::<a href="#type-filename">filename()</a>) -> ok</pre>
 <br></br>
 
 
@@ -462,7 +463,7 @@ regular Erlang forms.<a name="top-3"></a>
 
 
 
-<pre>top(F::function(), Forms::[forms()](#type-forms), Options::list()) -&gt; [forms()](#type-forms) | {error, term()}</pre>
+<pre>top(F::function(), Forms::<a href="#type-forms">forms()</a>, Options::list()) -> <a href="#type-forms">forms()</a> | {error, term()}</pre>
 <br></br>
 
 

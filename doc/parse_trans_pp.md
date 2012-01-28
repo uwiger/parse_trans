@@ -64,7 +64,7 @@ Erlang source code, storing it in the file Out.</td></tr><tr><td valign="top"><a
 
 
 
-<pre>pp_beam(Beam::[filename()](#type-filename)) -&gt; string() | {error, Reason}</pre>
+<pre>pp_beam(Beam::<a href="#type-filename">filename()</a>) -> string() | {error, Reason}</pre>
 <br></br>
 
 
@@ -79,7 +79,7 @@ the pretty-printed corresponding erlang source code.<a name="pp_beam-2"></a>
 
 
 
-<pre>pp_beam(Beam::[filename()](#type-filename), Out::[filename()](#type-filename)) -&gt; ok | {error, Reason}</pre>
+<pre>pp_beam(Beam::<a href="#type-filename">filename()</a>, Out::<a href="#type-filename">filename()</a>) -> ok | {error, Reason}</pre>
 <br></br>
 
 
@@ -94,7 +94,7 @@ Erlang source code, storing it in the file Out.<a name="pp_src-2"></a>
 
 
 
-<pre>pp_src(Res::Forms, Out::[filename()](#type-filename)) -&gt; ok</pre>
+<pre>pp_src(Res::Forms, Out::<a href="#type-filename">filename()</a>) -> ok</pre>
 <br></br>
 
 
