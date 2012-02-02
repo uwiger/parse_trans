@@ -1028,10 +1028,10 @@ f_get(#pass1{record_types = RTypes, exports = Es} = Acc, L) ->
 	     lists:concat(
 	       [[{[t_atom(L, A), t_record(L, R)], T}
 		 || {A, T} <- Types]
-		|| {R, Types} <- RTypes])
+		|| {R, Types} <- RTypes, lists:member(R, Es)])
 	     ++ [{[t_list(L, [t_attr(L, R, Acc)]), t_record(L, R)],
 		  t_list(L, [t_union(L, [Ts || {_, Ts} <- Types])])}
-		 || {R, Types} <- RTypes]
+		 || {R, Types} <- RTypes, lists:member(R, Es)]
 	    ),
      {function, L, Fname, 2,
       [{clause, L,
