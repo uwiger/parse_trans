@@ -20,7 +20,7 @@ h() ->
     ct_expand:term(wrap(my_fun())).
 
 i() ->
-    ct_expand:term(wrap(my_fun2())).
+    ct_expand:term(gb_trees:insert(a_fun, my_fun2(), gb_trees:empty())).
 
 zip([H1|T1], [H2|T2]) ->
     F = my_fun2(),

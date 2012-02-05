@@ -456,7 +456,11 @@ inspect_f(attribute, {attribute, _L, type,
 	     fun({typed_record_field, {record_field,_,{atom,_,A}}, T}) ->
 		     {A, T};
 		({typed_record_field, {record_field,_,{atom,_,A},_}, T}) ->
-		     {A, T}
+		     {A, T};
+		({record_field, _, {atom,L,A}, _}) ->
+		     {A, t_any(L)};
+		({record_field, _, {atom,L,A}}) ->
+		     {A, t_any(L)}
 	     end, RType),
     {false, Acc#pass1{record_types = [{R, Type}|Acc#pass1.record_types]}};
 inspect_f(_Type, _Form, _Context, Acc) ->

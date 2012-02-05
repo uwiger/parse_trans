@@ -122,7 +122,7 @@
 %%%
 -spec error(string(), any(), [{any(),any()}]) ->
     none().
-error(R, F, I) ->
+error(R, _F, I) ->
     % rpt_error(R, F, I, erlang:get_stacktrace()),
     throw({error,get_pos(I),{R, erlang:get_stacktrace()}}).
 
