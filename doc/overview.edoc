@@ -1,4 +1,4 @@
-@author Ulf Wiger <ulf.wiger@erlang-consulting.com>
+@author Ulf Wiger <ulf@feuerlabs.com>
 @doc A generic parse transform library
 This library is intended to simplify the task of writing parse transform
 modules for Erlang.

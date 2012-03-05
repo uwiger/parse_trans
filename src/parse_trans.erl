@@ -1,7 +1,7 @@
 %%% The contents of this file are subject to the Erlang Public License,
-%%% Version 1.0, (the "License"); you may not use this file except in
+%%% Version 1.1, (the "License"); you may not use this file except in
 %%% compliance with the License. You may obtain a copy of the License at
-%%% http://www.erlang.org/license/EPL1_0.txt
+%%% http://www.erlang.org/EPLICENSE
 %%%
 %%% Software distributed under the License is distributed on an "AS IS"
 %%% basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
@@ -18,11 +18,11 @@
 
 %%%-------------------------------------------------------------------
 %%% File    : parse_trans.erl
-%%% @author  : Ulf Wiger <ulf.wiger@erlang-consulting.com>
+%%% @author  : Ulf Wiger <ulf.wiger@feuerlabs.com>
 %%% @end
 %%% Description :
 %%%
-%%% Created : 13 Feb 2006 by Ulf Wiger <ulf.wiger@erlang-consulting.com>
+%%% Created : 13 Feb 2006 by Ulf Wiger <ulf.wiger@feuerlabs.com> (then Ericsson)
 %%%-------------------------------------------------------------------
 
 %%% @doc Generic parse transform library for Erlang.
