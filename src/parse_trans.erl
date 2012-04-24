@@ -309,23 +309,19 @@ depth_first(Fun, Acc, Forms, Options) when is_function(Fun, 4) ->
     do(fun do_depth_first/4, Fun, Acc, Forms, Options).
 
 do(Transform, Fun, Acc, Forms, Options) ->
-    case [E || {error,_} = E <- Forms] of
-	[_|_] -> {error, []};
-	[] ->
-	    Context = initial_context(Forms, Options),
-	    File = Context#context.file,
-	    try Transform(Fun, Acc, Forms, Context) of
-		{NewForms, _} = Result when is_list(NewForms) ->
-		    optionally_pretty_print(NewForms, Options, Context),
-		    Result
-	    catch
-		error:Reason ->
-		    {error,
-		     [{File, [{?DUMMY_LINE, ?MODULE,
-			       {Reason, erlang:get_stacktrace()}}]}]};
-		throw:{error, Ln, What} ->
-		    {error, [{error, {Ln, ?MODULE, What}}]}
-	    end
+    Context = initial_context(Forms, Options),
+    File = Context#context.file,
+    try Transform(Fun, Acc, Forms, Context) of
+	{NewForms, _} = Result when is_list(NewForms) ->
+	    optionally_pretty_print(NewForms, Options, Context),
+	    Result
+    catch
+	error:Reason ->
+	    {error,
+	     [{File, [{?DUMMY_LINE, ?MODULE,
+		       {Reason, erlang:get_stacktrace()}}]}]};
+	throw:{error, Ln, What} ->
+	    {error, [{error, {Ln, ?MODULE, What}}]}
     end.
 
 -spec top(function(), forms(), list()) ->
