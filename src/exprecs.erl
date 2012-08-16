@@ -611,7 +611,7 @@ generate_accessors(L, Acc) ->
        f_get(Acc, L),
        f_set(Acc, L),
        f_fromlist(Acc, L) |
-       lists:concat(
+       lists:append(
 	 lists:map(
 	   fun(Rname) ->
 		   Fields = get_flds(Rname, Acc),
@@ -1029,7 +1029,7 @@ f_isrec_1(Acc, L) ->
 f_get(#pass1{record_types = RTypes, exports = Es} = Acc, L) ->
     Fname = list_to_atom(fname_prefix(get, Acc)),
     [funspec(L, Fname,
-	     lists:concat(
+	     lists:append(
 	       [[{[t_atom(L, A), t_record(L, R)], T}
 		 || {A, T} <- Types]
 		|| {R, Types} <- RTypes, lists:member(R, Es)])
