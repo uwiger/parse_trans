@@ -65,6 +65,7 @@
          get_file/1,
          get_module/1,
          get_attribute/2,
+         get_attribute/3,
          get_orig_syntax_tree/1,
          function_exists/3,
          optionally_pretty_print/3,
@@ -212,7 +213,7 @@ get_pos(I) when is_list(I) ->
 -spec get_file(forms()) ->
     string().
 get_file(Forms) ->
-    string_value(hd(get_attribute(file, Forms))).
+    string_value(hd(get_attribute(file, Forms, [erl_syntax:string("undefined")]))).
 
 
 
@@ -224,7 +225,7 @@ get_file(Forms) ->
 -spec get_module([any()]) ->
     atom().
 get_module(Forms) ->
-    atom_value(hd(get_attribute(module, Forms))).
+    atom_value(hd(get_attribute(module, Forms, [erl_syntax:atom(undefined)]))).
 
 
 
@@ -238,10 +239,11 @@ get_module(Forms) ->
 -spec get_attribute(atom(), [any()]) ->
 			   'none' | [erl_syntax:syntaxTree()].
 %%
-get_attribute(A, Forms) ->
+get_attribute(A, Forms) -> get_attribute(A,Forms,[erl_syntax:atom(undefined)]).
+get_attribute(A, Forms, Undef) ->
     case find_attribute(A, Forms) of
         false ->
-            throw({error, ?DUMMY_LINE, {missing_attribute, A}});
+            Undef;
         Other ->
             Other
     end.
@@ -633,8 +635,7 @@ apply_F(F, Type, Form, Context, Acc) ->
                     {context, Context},
                     {acc, Acc},
                     {apply_f, F},
-                    {form, Form}]
-		  ++ [{stack, erlang:get_stacktrace()}])
+                    {form, Form}] ++ [{stack, erlang:get_stacktrace()}])
     end.
 
 
