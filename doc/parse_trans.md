@@ -11,11 +11,9 @@ Generic parse transform library for Erlang.
 
 
 
-__Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-consulting.com`](mailto:ulf.wiger@erlang-consulting.com)).<a name="description"></a>
+__Authors:__ : Ulf Wiger ([`ulf.wiger@feuerlabs.com`](mailto:ulf.wiger@feuerlabs.com)).<a name="description"></a>
 
 ##Description##
-
-
 
 
 ...
@@ -88,7 +86,7 @@ __Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-consulting.com`](mailto:ulf.wiger@e
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#context-2">context/2</a></td><td>
 Accessor function for the Context record.</td></tr><tr><td valign="top"><a href="#depth_first-4">depth_first/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_depth_first-4">do_depth_first/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_insert_forms-4">do_insert_forms/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_inspect-4">do_inspect/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_transform-4">do_transform/4</a></td><td></td></tr><tr><td valign="top"><a href="#error-3">error/3</a></td><td>.</td></tr><tr><td valign="top"><a href="#export_function-3">export_function/3</a></td><td></td></tr><tr><td valign="top"><a href="#format_error-1">format_error/1</a></td><td></td></tr><tr><td valign="top"><a href="#function_exists-3">function_exists/3</a></td><td>
 Checks whether the given function is defined in Forms.</td></tr><tr><td valign="top"><a href="#get_attribute-2">get_attribute/2</a></td><td>
-Returns the value of the first occurence of attribute A.</td></tr><tr><td valign="top"><a href="#get_file-1">get_file/1</a></td><td>
+Returns the value of the first occurence of attribute A.</td></tr><tr><td valign="top"><a href="#get_attribute-3">get_attribute/3</a></td><td></td></tr><tr><td valign="top"><a href="#get_file-1">get_file/1</a></td><td>
 Returns the name of the file being compiled.</td></tr><tr><td valign="top"><a href="#get_module-1">get_module/1</a></td><td>
 Returns the name of the module being compiled.</td></tr><tr><td valign="top"><a href="#get_orig_syntax_tree-1">get_orig_syntax_tree/1</a></td><td>.</td></tr><tr><td valign="top"><a href="#get_pos-1">get_pos/1</a></td><td>
 Tries to retrieve the line number from an erl_syntax form.</td></tr><tr><td valign="top"><a href="#initial_context-2">initial_context/2</a></td><td>
@@ -236,7 +234,16 @@ Checks whether the given function is defined in Forms.<a name="get_attribute-2">
 
 
 
-Returns the value of the first occurence of attribute A.<a name="get_file-1"></a>
+Returns the value of the first occurence of attribute A.<a name="get_attribute-3"></a>
+
+###get_attribute/3##
+
+
+
+
+`get_attribute(A, Forms, Undef) -> any()`
+
+<a name="get_file-1"></a>
 
 ###get_file/1##
 
@@ -357,35 +364,27 @@ Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).<a name="o
 Performs a transform of `Forms` using the fun `Fun(Form)`. `Form` is always
 an Erlang abstract form, i.e. it is not converted to syntax_tools
 representation. The intention of this transform is for the fun to have a
-catch-all clause returning `continue`. This will ensure that it stays robust  
+catch-all clause returning `continue`. This will ensure that it stays robust
 against additions to the language.
 
-
-
 `Fun(Form)` must return either of the following:
-
-
 
 * `NewForm` - any valid form
 * `continue` - dig into the sub-expressions of the form
 * `{done, NewForm}` - Replace `Form` with `NewForm`; return all following
 forms unchanged
-* `{error, Reason}` - Abort transformation with an error message.
-
-Example - This transform fun would convert all instances of `P ! Msg` to
+* `{error, Reason}` - Abort transformation with an error message.Example - This transform fun would convert all instances of `P ! Msg` to
 `gproc:send(P, Msg)`:
 <pre>
   parse_transform(Forms, _Options) ->
       parse_trans:plain_transform(fun do_transform/1, Forms).
- 
   do_transform({'op', L, '!', Lhs, Rhs}) ->
        [NewLhs] = parse_trans:plain_transform(fun do_transform/1, [Lhs]),
        [NewRhs] = parse_trans:plain_transform(fun do_transform/1, [Rhs]),
       {call, L, {remote, L, {atom, L, gproc}, {atom, L, send}},
        [NewLhs, NewRhs]};
   do_transform(_) ->
-      continue.
-  </pre><a name="pp_beam-1"></a>
+      continue.</pre><a name="pp_beam-1"></a>
 
 ###pp_beam/1##
 

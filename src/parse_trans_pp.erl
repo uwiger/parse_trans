@@ -18,18 +18,18 @@
 
 %%%-------------------------------------------------------------------
 %%% File    : parse_trans_pp.erl
-%%% @author  : Ulf Wiger <ulf.wiger@erlang-solutions.com>
+%%% @author  : Ulf Wiger <ulf@feuerlabs.com>
 %%% @end
-%%% Description : 
+%%% Description :
 %%%
-%%% Created : 3 Aug 2010 by Ulf Wiger <ulf.wiger@erlang-solutions.com>
+%%% Created : 3 Aug 2010 by Ulf Wiger <ulf@feuerlabs.com>
 %%%-------------------------------------------------------------------
 
 %%% @doc Generic parse transform library for Erlang.
-%%% 
+%%%
 %%% This module contains some useful utility functions for inspecting
 %%% the results of parse transforms or code generation.
-%%% The function `main/1' is called from escript, and can be used to 
+%%% The function `main/1' is called from escript, and can be used to
 %%% pretty-print debug info in a .beam file from a Linux shell.
 %%%
 %%% Using e.g. the following bash alias:
@@ -62,10 +62,11 @@ main([F]) ->
 %%
 -spec pp_src(parse_trans:forms(), file:filename()) ->
     ok.
-pp_src(Res, F) ->
+pp_src(Forms0, F) ->
+    Forms = epp:restore_typed_record_fields(revert(Forms0)),
     Str = [io_lib:fwrite("~s~n",
                          [lists:flatten([erl_pp:form(Fm) ||
-                                            Fm <- revert(Res)])])],
+                                            Fm <- Forms])])],
     file:write_file(F, list_to_binary(Str)).
 
 %% @spec (Beam::filename()) -> string() | {error, Reason}

@@ -3,29 +3,21 @@
 #The parse_trans application#
 
 
-__Authors:__ Ulf Wiger ([`ulf.wiger@erlang-consulting.com`](mailto:ulf.wiger@erlang-consulting.com)).
+__Authors:__ Ulf Wiger ([`ulf@feuerlabs.com`](mailto:ulf@feuerlabs.com)).
 
 A generic parse transform library
 This library is intended to simplify the task of writing parse transform
 modules for Erlang.
 
-
-
 #Introduction to parse transforms#
-
-
 
 
 ##The simplest transform##
 
 
-
-
 The very simplest transform we can make is one that doesn't
 change a thing. For convenience, we will at least print the forms.
-This will enlighten us as to what the forms actually look like.
-
-<pre>
+This will enlighten us as to what the forms actually look like.<pre>
 -module(test_pt).
 
 -export([parse_transform/2]).
@@ -35,19 +27,13 @@ parse_transform(Forms, _Options) ->
     Forms.
 </pre>
 
-
-
-Trying this with a very simple module:
-
-<pre>
+Trying this with a very simple module:<pre>
 -module(ex1).
 -export([add/2]).
 
 add(X,Y) ->
     X + Y.
-</pre>
-
-<pre>
+</pre><pre>
 1> c(ex1, [{parse_transform,test_pt}]).
 Forms = [{attribute,1,file,{"./ex1.erl",1}},
          {attribute,1,module,ex1},
@@ -61,16 +47,11 @@ Forms = [{attribute,1,file,{"./ex1.erl",1}},
 {ok,ex1}
 </pre>
 
-
-
 ##`transform/4`##
 
 
 
 ...
-
-
-
 
 #Current limitations#
 

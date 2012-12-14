@@ -18,11 +18,11 @@
 
 %%-------------------------------------------------------------------
 %% File    : ct_expand.erl
-%% @author  : Ulf Wiger <ulf.wiger@erlang-solutions.com>
+%% @author  : Ulf Wiger <ulf@feuerlabs.com>
 %% @end
 %% Description :
 %%
-%% Created : 7 Apr 2010 by Ulf Wiger <ulf.wiger@erlang-solutions.com>
+%% Created : 7 Apr 2010 by Ulf Wiger <ulf@feuerlabs.com>
 %%-------------------------------------------------------------------
 
 %% @doc Compile-time expansion utility

@@ -2,8 +2,10 @@
 
 -compile({parse_transform, parse_trans_codegen}).
 
--export([f/1, g/2, h/0, i/0, j/2, gen/2, fs/0]).
+-export([f/1, g/2, h/0, i/0, j/2, k/0, gen/2, fs/0]).
 
+%%-pt_pp_forms(true).
+-pt_pp_src(true).
 
 f(Name) ->
     codegen:gen_function(
@@ -45,6 +47,18 @@ j(Name, Form) ->
       fun(L) ->
 	      member({'$form',Form}, L)
       end).
+
+x() ->
+    [(fun(X) ->
+	      X
+      end)(X1) || X1 <- [1,2]].
+
+k() ->
+    codegen:gen_function(
+      lcf,
+      [fun({'$var',X}) ->
+	       {'$var',Y}
+       end || {X, Y}  <- [{1,a},{2,b},{3,c}]]).
 
 gen(Name, X) ->
     codegen:gen_function(Name, fun(L) -> lists:member({'$var',X}, L) end).

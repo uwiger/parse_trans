@@ -18,9 +18,9 @@
 
 %%%-------------------------------------------------------------------
 %%% File    : parse_trans_codegen.erl
-%%% @author  : Ulf Wiger <ulf.wiger@erlang-solutions.com>
+%%% @author  : Ulf Wiger <ulf@feuerlabs.com>
 %%% @end
-%%% Description : 
+%%% Description :
 %%%-------------------------------------------------------------------
 
 %%% @doc Parse transform for code generation pseduo functions
@@ -32,7 +32,6 @@
 -module(parse_trans_codegen).
 
 -export([parse_transform/2]).
-
 
 %% @spec (Forms, Options) -> NewForms
 %%
@@ -53,13 +52,31 @@
 %% Usage: `codegen:gen_function(Name, Fun)'
 %%
 %% Substitutes the abstract code for a function with name `Name'
-%% and the same behaviour as `Fntun'.
+%% and the same behaviour as `Fun'.
 %%
 %% `Fun' can either be a anonymous `fun', which is then converted to
-%% a named function. It can also be an `implicit fun', e.g.
-%% `fun is_member/2'. In this case, the referenced function is fetched
+%% a named function, or it can be an `implicit fun', e.g.
+%% `fun is_member/2'. In the latter case, the referenced function is fetched
 %% and converted to an abstract form representation. It is also renamed
 %% so that the generated function has the name `Name'.
+%% <p/>
+%% Another alternative is to wrap a fun inside a list comprehension, e.g.
+%% <pre>
+%% f(Name, L) -&gt;
+%%     codegen:gen_function(
+%%         Name,
+%%         [ fun({'$var',X}) -&gt;
+%%              {'$var', Y}
+%%           end || {X, Y} &amp;lt;- L ]).
+%% </pre>
+%% <p/>
+%% Calling the above with `f(foo, [{1,a},{2,b},{3,c}])' will result in
+%% generated code corresponding to:
+%% <pre>
+%% foo(1) -&gt; a;
+%% foo(2) -&gt; b;
+%% foo(3) -&gt; c.
+%% </pre>
 %%
 %% <h2>gen_functions/1</h2>
 %%
@@ -159,37 +176,99 @@ xform_fun(_, Form, _Ctxt, Acc) ->
 
 gen_function(NameF, FunF, L, Acc) ->
     case erl_syntax:type(FunF) of
-	implicit_fun ->
-	    AQ = erl_syntax:implicit_fun_name(FunF),
-	    Name = erl_syntax:atom_value(erl_syntax:arity_qualifier_body(AQ)),
-	    Arity = erl_syntax:integer_value(
-		      erl_syntax:arity_qualifier_argument(AQ)),
-	    NewForm = find_function(Name, Arity, Acc),
-	    ClauseForms = erl_syntax:function_clauses(NewForm),
+	T when T==implicit_fun; T==fun_expr ->
+	    {Arity, Clauses} = gen_function_clauses(T, NameF, FunF, L, Acc),
 	    {tuple, 1, [{atom, 1, function},
 			{integer, 1, L},
 			NameF,
 			{integer, 1, Arity},
-			abstract_clauses(ClauseForms)]};
-	_ ->
-	    ClauseForms = erl_syntax:fun_expr_clauses(FunF),
-	    Arity = get_arity(ClauseForms),
-	    {tuple,L,[{atom,1,function},
+			substitute(abstract(Clauses))]};
+	list_comp ->
+	    %% Extract the fun from the LC
+	    [Template] = parse_trans:revert(
+			   [erl_syntax:list_comp_template(FunF)]),
+	    %% Process fun in the normal fashion (as above)
+	    {Arity, Clauses} = gen_function_clauses(erl_syntax:type(Template),
+						    NameF, Template, L, Acc),
+	    Body = erl_syntax:list_comp_body(FunF),
+	    %% Collect all variables from the LC generator(s)
+	    %% We want to produce an abstract representation of something like:
+	    %% {function,1,Name,Arity,
+	    %%  lists:flatten(
+	    %%     [(fun(V1,V2,...) ->
+	    %%           ...
+	    %%       end)(__V1,__V2,...) || {__V1,__V2,...} <- L])}
+	    %% where the __Vn vars are our renamed versions of the LC generator
+	    %% vars. This allows us to instantiate the clauses at run-time.
+	    Vars = lists:flatten(
+		     [sets:to_list(erl_syntax_lib:variables(
+				     erl_syntax:generator_pattern(G)))
+		      || G <- Body]),
+	    Vars1 = [list_to_atom("__" ++ atom_to_list(V)) || V <- Vars],
+	    VarMap = lists:zip(Vars, Vars1),
+	    Body1 =
+		[erl_syntax:generator(
+		   rename_vars(VarMap, gen_pattern(G)),
+		   gen_body(G)) || G <- Body],
+	    [RevLC] = parse_trans:revert(
+			[erl_syntax:list_comp(
+			   {call, 1,
+			    {'fun',1,
+			     {clauses,
+			      [{clause,1,[{var,1,V} || V <- Vars],[],
+				[substitute(
+				   abstract(Clauses))]
+			       }]}
+			    }, [{var,1,V} || V <- Vars1]}, Body1)]),
+	    {tuple,1,[{atom,1,function},
 		      {integer, 1, L},
 		      NameF,
-		      {integer,1, Arity},
-		      abstract_clauses(ClauseForms)]}
+		      {integer, 1, Arity},
+		      {call, 1, {remote, 1, {atom, 1, lists},
+				 {atom,1,flatten}},
+		       [RevLC]}]}
     end.
+
+gen_pattern(G) ->
+    erl_syntax:generator_pattern(G).
+
+gen_body(G) ->
+    erl_syntax:generator_body(G).
+
+rename_vars(Vars, Tree) ->
+    erl_syntax_lib:map(
+      fun(T) ->
+	      case erl_syntax:type(T) of
+		  variable ->
+		      V = erl_syntax:variable_name(T),
+		      {_,V1} = lists:keyfind(V,1,Vars),
+		      erl_syntax:variable(V1);
+		  _ ->
+		      T
+	      end
+      end, Tree).
+
+gen_function_clauses(implicit_fun, _NameF, FunF, _L, Acc) ->
+    AQ = erl_syntax:implicit_fun_name(FunF),
+    Name = erl_syntax:atom_value(erl_syntax:arity_qualifier_body(AQ)),
+    Arity = erl_syntax:integer_value(
+	      erl_syntax:arity_qualifier_argument(AQ)),
+    NewForm = find_function(Name, Arity, Acc),
+    ClauseForms = erl_syntax:function_clauses(NewForm),
+    {Arity, ClauseForms};
+gen_function_clauses(fun_expr, _NameF, FunF, _L, _Acc) ->
+    ClauseForms = erl_syntax:fun_expr_clauses(FunF),
+    Arity = get_arity(ClauseForms),
+    {Arity, ClauseForms}.
 
 find_function(Name, Arity, Forms) ->
     [Form] = [F || {function,_,N,A,_} = F <- Forms,
-		N == Name,
-		A == Arity],
+		   N == Name,
+		   A == Arity],
     Form.
 
-abstract_clauses(ClauseForms) ->
-    Abstract = erl_parse:abstract(parse_trans:revert(ClauseForms)),
-    substitute(Abstract).
+abstract(ClauseForms) ->
+    erl_parse:abstract(parse_trans:revert(ClauseForms)).
 
 substitute({tuple,L0,
 	    [{atom,_,tuple},

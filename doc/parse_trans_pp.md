@@ -10,27 +10,20 @@ Generic parse transform library for Erlang.
 
 
 
-__Authors:__ : Ulf Wiger ([`ulf.wiger@erlang-solutions.com`](mailto:ulf.wiger@erlang-solutions.com)).<a name="description"></a>
+__Authors:__ : Ulf Wiger ([`ulf@feuerlabs.com`](mailto:ulf@feuerlabs.com)).<a name="description"></a>
 
 ##Description##
 
 
-
-
 This module contains some useful utility functions for inspecting
 the results of parse transforms or code generation.
-The function `main/1` is called from escript, and can be used to   
-pretty-print debug info in a .beam file from a Linux shell.
-
-Using e.g. the following bash alias:
+The function `main/1` is called from escript, and can be used to
+pretty-print debug info in a .beam file from a Linux shell.Using e.g. the following bash alias:
 <pre>
-   alias pp='escript $PARSE_TRANS_ROOT/ebin/parse_trans_pp.beam'
-   </pre>
+   alias pp='escript $PARSE_TRANS_ROOT/ebin/parse_trans_pp.beam'</pre>
 
-   
-a file could be pretty-printed using the following command:
 
-`$ pp ex_codegen.beam | less`<a name="index"></a>
+a file could be pretty-printed using the following command:`$ pp ex_codegen.beam | less`<a name="index"></a>
 
 ##Function Index##
 
@@ -94,7 +87,7 @@ Erlang source code, storing it in the file Out.<a name="pp_src-2"></a>
 
 
 
-<pre>pp_src(Res::Forms, Out::<a href="#type-filename">filename()</a>) -> ok</pre>
+<pre>pp_src(Forms0::Forms, Out::<a href="#type-filename">filename()</a>) -> ok</pre>
 <br></br>
 
 
