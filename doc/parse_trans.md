@@ -84,7 +84,7 @@ __Authors:__ : Ulf Wiger ([`ulf.wiger@feuerlabs.com`](mailto:ulf.wiger@feuerlabs
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#context-2">context/2</a></td><td>
-Accessor function for the Context record.</td></tr><tr><td valign="top"><a href="#depth_first-4">depth_first/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_depth_first-4">do_depth_first/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_insert_forms-4">do_insert_forms/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_inspect-4">do_inspect/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_transform-4">do_transform/4</a></td><td></td></tr><tr><td valign="top"><a href="#error-3">error/3</a></td><td>.</td></tr><tr><td valign="top"><a href="#export_function-3">export_function/3</a></td><td></td></tr><tr><td valign="top"><a href="#format_error-1">format_error/1</a></td><td></td></tr><tr><td valign="top"><a href="#function_exists-3">function_exists/3</a></td><td>
+Accessor function for the Context record.</td></tr><tr><td valign="top"><a href="#depth_first-4">depth_first/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_depth_first-4">do_depth_first/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_insert_forms-4">do_insert_forms/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_inspect-4">do_inspect/4</a></td><td></td></tr><tr><td valign="top"><a href="#do_transform-4">do_transform/4</a></td><td></td></tr><tr><td valign="top"><a href="#error-3">error/3</a></td><td>.</td></tr><tr><td valign="top"><a href="#export_function-3">export_function/3</a></td><td></td></tr><tr><td valign="top"><a href="#format_error-1">format_error/1</a></td><td></td></tr><tr><td valign="top"><a href="#format_exception-2">format_exception/2</a></td><td>Equivalent to <a href="#format_exception-3"><tt>format_exception(Class, Reason, 4)</tt></a>.</td></tr><tr><td valign="top"><a href="#format_exception-3">format_exception/3</a></td><td>Produces a few lines of user-friendly formatting of exception info.</td></tr><tr><td valign="top"><a href="#function_exists-3">function_exists/3</a></td><td>
 Checks whether the given function is defined in Forms.</td></tr><tr><td valign="top"><a href="#get_attribute-2">get_attribute/2</a></td><td>
 Returns the value of the first occurence of attribute A.</td></tr><tr><td valign="top"><a href="#get_attribute-3">get_attribute/3</a></td><td></td></tr><tr><td valign="top"><a href="#get_file-1">get_file/1</a></td><td>
 Returns the name of the file being compiled.</td></tr><tr><td valign="top"><a href="#get_module-1">get_module/1</a></td><td>
@@ -96,7 +96,7 @@ Performs a transform of <code>Forms</code> using the fun <code>Fun(Form)</code>.
 Reads debug_info from the beam file Beam and returns a string containing
 the pretty-printed corresponding erlang source code.</td></tr><tr><td valign="top"><a href="#pp_beam-2">pp_beam/2</a></td><td>
 Reads debug_info from the beam file Beam and pretty-prints it as
-Erlang source code, storing it in the file Out.</td></tr><tr><td valign="top"><a href="#pp_src-2">pp_src/2</a></td><td>Pretty-prints the erlang source code corresponding to Forms into Out.</td></tr><tr><td valign="top"><a href="#replace_function-4">replace_function/4</a></td><td></td></tr><tr><td valign="top"><a href="#revert-1">revert/1</a></td><td>Reverts back from Syntax Tools format to Erlang forms.</td></tr><tr><td valign="top"><a href="#top-3">top/3</a></td><td></td></tr><tr><td valign="top"><a href="#transform-4">transform/4</a></td><td>
+Erlang source code, storing it in the file Out.</td></tr><tr><td valign="top"><a href="#pp_src-2">pp_src/2</a></td><td>Pretty-prints the erlang source code corresponding to Forms into Out.</td></tr><tr><td valign="top"><a href="#replace_function-4">replace_function/4</a></td><td></td></tr><tr><td valign="top"><a href="#return-2">return/2</a></td><td>Checks the transformed result for errors and warnings.</td></tr><tr><td valign="top"><a href="#revert-1">revert/1</a></td><td>Reverts back from Syntax Tools format to Erlang forms.</td></tr><tr><td valign="top"><a href="#top-3">top/3</a></td><td></td></tr><tr><td valign="top"><a href="#transform-4">transform/4</a></td><td>
 Makes one pass.</td></tr></table>
 
 
@@ -207,7 +207,40 @@ Used to report errors detected during the parse transform.<a name="export_functi
 <br></br>
 
 
-<a name="function_exists-3"></a>
+<a name="format_exception-2"></a>
+
+###format_exception/2##
+
+
+
+
+<pre>format_exception(Class, Reason) -&gt; String</pre>
+<br></br>
+
+
+
+
+Equivalent to [`format_exception(Class, Reason, 4)`](#format_exception-3).<a name="format_exception-3"></a>
+
+###format_exception/3##
+
+
+
+
+<pre>format_exception(Class, Reason, Lines) -&gt; String</pre>
+<ul class="definitions"><li><pre>Class = error | throw | exit</pre></li><li><pre>Reason = term()</pre></li><li><pre>Lines = integer() | infinity</pre></li></ul>
+
+
+
+
+
+Produces a few lines of user-friendly formatting of exception info
+
+This function is very similar to the exception pretty-printing in the shell,
+but returns a string that can be used as error info e.g. by error forms
+handled by [`return/2`](#return-2). By default, the first 4 lines of the
+pretty-printed exception info are returned, but this can be controlled
+with the `Lines` parameter.Note that a stacktrace is generated inside this function.<a name="function_exists-3"></a>
 
 ###function_exists/3##
 
@@ -437,7 +470,43 @@ Pretty-prints the erlang source code corresponding to Forms into Out
 
 `replace_function(F, Arity, NewForm, Forms) -> any()`
 
-<a name="revert-1"></a>
+<a name="return-2"></a>
+
+###return/2##
+
+
+
+
+<pre>return(Forms, Context) -&gt; Forms | {error, Es, Ws} | {warnings, Forms, Ws}</pre>
+<br></br>
+
+
+
+
+Checks the transformed result for errors and warnings
+
+
+Errors and warnings can be produced from inside a parse transform, with
+a bit of care. The easiest way is to simply produce an `{error, Err}` or
+`{warning, Warn}` form in place. This function finds such forms, and
+removes them from the form list (otherwise, the linter will crash), and
+produces a return value that the compiler can work with.The format of the `error` and `warning` "forms" must be
+`{Tag, {Pos, Module, Info}}`, where:
+
+* `Tag :: error | warning`
+
+* `Pos :: LineNumber | {LineNumber, ColumnNumber}`
+
+* `Module` is a module that exports a corresponding
+`Module:format_error(Info)`
+
+* `Info :: term()`
+
+
+
+
+If the error is in the form of a caught exception, `Info` may be produced
+using the function [`format_exception/2`](#format_exception-2).<a name="revert-1"></a>
 
 ###revert/1##
 

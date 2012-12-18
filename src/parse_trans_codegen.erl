@@ -32,6 +32,7 @@
 -module(parse_trans_codegen).
 
 -export([parse_transform/2]).
+-export([format_error/1]).
 
 %% @spec (Forms, Options) -> NewForms
 %%
@@ -134,32 +135,34 @@
 %% @end
 %%
 parse_transform(Forms, Options) ->
+    Context = parse_trans:initial_context(Forms, Options),
     {NewForms, _} =
-	parse_trans:depth_first(fun xform_fun/4, _Acc = Forms, Forms, Options),
-    parse_trans:revert(NewForms).
+	parse_trans:do_depth_first(
+	  fun xform_fun/4, _Acc = Forms, Forms, Context),
+    parse_trans:return(parse_trans:revert(NewForms), Context).
 
 xform_fun(application, Form, _Ctxt, Acc) ->
     MFA = erl_syntax_lib:analyze_application(Form),
+    L = erl_syntax:get_pos(Form),
     case MFA of
 	{codegen, {gen_function, 2}} ->
 	    [NameF, FunF] =
 	    	erl_syntax:application_arguments(Form),
-	    NewForm = gen_function(NameF, FunF, erl_syntax:get_pos(Form), Acc),
+	    NewForm = gen_function(NameF, FunF, L, L, Acc),
 	    {NewForm, Acc};
 	{codegen, {gen_function, 3}} ->
 	    [NameF, FunF, LineF] =
 		erl_syntax:application_arguments(Form),
 	    NewForm = gen_function(
-			NameF, FunF, erl_syntax:integer_value(LineF), Acc),
+			NameF, FunF, L, erl_syntax:integer_value(LineF), Acc),
 	    {NewForm, Acc};
 	{codegen, {gen_functions, 1}} ->
 	    [List] = erl_syntax:application_arguments(Form),
 	    Elems = erl_syntax:list_elements(List),
-	    Pos = erl_syntax:get_pos(hd(Elems)),
 	    NewForms = lists:map(
 			 fun(E) ->
 				 [NameF, FunF] = erl_syntax:tuple_elements(E),
-				 gen_function(NameF, FunF, Pos, Acc)
+				 gen_function(NameF, FunF, L, L, Acc)
 			 end, Elems),
 	    {erl_syntax:list(NewForms), Acc};
 	{codegen, {exprs, 1}} ->
@@ -174,7 +177,15 @@ xform_fun(application, Form, _Ctxt, Acc) ->
 xform_fun(_, Form, _Ctxt, Acc) ->
     {Form, Acc}.
 
-gen_function(NameF, FunF, L, Acc) ->
+gen_function(NameF, FunF, L0, L, Acc) ->
+    try gen_function_(NameF, FunF, L, Acc)
+    catch
+	error:E ->
+	    ErrStr = parse_trans:format_exception(error, E),
+	    {error, {L0, ?MODULE, ErrStr}}
+    end.
+
+gen_function_(NameF, FunF, L, Acc) ->
     case erl_syntax:type(FunF) of
 	T when T==implicit_fun; T==fun_expr ->
 	    {Arity, Clauses} = gen_function_clauses(T, NameF, FunF, L, Acc),
@@ -306,4 +317,13 @@ get_arity(Clauses) ->
 	    Ay;
 	Other ->
 	    erlang:error(ambiguous, Other)
+    end.
+
+
+format_error(E) ->
+    case io_lib:deep_char_list(E) of
+	true ->
+	    E;
+	_ ->
+	    io_lib:write(E)
     end.

@@ -39,7 +39,9 @@
          inspect/4,
 	 transform/4,
          depth_first/4,
-         revert/1
+         revert/1,
+	 format_exception/2, format_exception/3,
+	 return/2
         ]).
 
 -export([
@@ -169,6 +171,8 @@ plain_transform1(_, []) ->
     [];
 plain_transform1(Fun, [F|Fs]) when is_atom(element(1,F)) ->
     case Fun(F) of
+	skip ->
+	    plain_transform1(Fun, Fs);
 	continue ->
 	    [list_to_tuple(plain_transform1(Fun, tuple_to_list(F))) |
 	     plain_transform1(Fun, Fs)];
@@ -512,6 +516,106 @@ get_orig_syntax_tree(File) ->
 revert(Tree) ->
     [erl_syntax:revert(T) || T <- lists:flatten(Tree)].
 
+%%% @spec (Forms, Context) -> Forms | {error,Es,Ws} | {warnings,Forms,Ws}
+%%%
+%%% @doc Checks the transformed result for errors and warnings
+%%% <p>Errors and warnings can be produced from inside a parse transform, with
+%%% a bit of care. The easiest way is to simply produce an `{error, Err}' or
+%%% `{warning, Warn}' form in place. This function finds such forms, and
+%%% removes them from the form list (otherwise, the linter will crash), and
+%%% produces a return value that the compiler can work with.</p>
+%%%
+%%% The format of the `error' and `warning' "forms" must be
+%%% `{Tag, {Pos, Module, Info}}', where:
+%%% <ul>
+%%% <li>`Tag :: error | warning'</li>
+%%% <li>`Pos :: LineNumber | {LineNumber, ColumnNumber}'</li>
+%%% <li>`Module' is a module that exports a corresponding
+%%%    `Module:format_error(Info)'</li>
+%%% <li>`Info :: term()'</li>
+%%% </ul>
+%%% <p>If the error is in the form of a caught exception, `Info' may be produced
+%%% using the function {@link format_exception/2}.</p>
+%%% @end
+return(Forms, Context) ->
+    JustForms = plain_transform(
+		  fun({error,_}) -> skip;
+		     ({warning,_}) -> skip;
+		     (_) -> continue
+		  end, Forms),
+    File = case Context of
+	       #context{file = F} -> F;
+	       _ -> "parse_transform"
+	   end,
+    case {find_forms(Forms, error), find_forms(Forms, warning)} of
+	{[], []} ->
+	    JustForms;
+	{[], Ws} ->
+	    {warnings, JustForms, [{File, [W || {warning,W} <- Ws]}]};
+	{Es, Ws} ->
+	    {error,
+	     [{File, [E || {error,E} <- Es]}],
+	     [{File, [W || {warning,W} <- Ws]}]}
+    end.
+
+find_forms([H|T], Tag) when element(1, H) == Tag ->
+    [H|find_forms(T, Tag)];
+find_forms([H|T], Tag) when is_tuple(H) ->
+    find_forms(tuple_to_list(H), Tag) ++ find_forms(T, Tag);
+find_forms([H|T], Tag) when is_list(H) ->
+    find_forms(H, Tag) ++ find_forms(T, Tag);
+find_forms([_|T], Tag) ->
+    find_forms(T, Tag);
+find_forms([], _) ->
+    [].
+
+
+-define(LINEMAX, 5).
+-define(CHAR_MAX, 60).
+
+%%% @spec (Class, Reason) -> String
+%%% @equiv format_exception(Class, Reason, 4)
+format_exception(Class, Reason) ->
+    format_exception(Class, Reason, 4).
+
+%%% @spec (Class, Reason, Lines) -> String
+%%% Class = error | throw | exit
+%%% Reason = term()
+%%% Lines = integer() | infinity
+%%%
+%%% @doc Produces a few lines of user-friendly formatting of exception info
+%%%
+%%% This function is very similar to the exception pretty-printing in the shell,
+%%% but returns a string that can be used as error info e.g. by error forms
+%%% handled by {@link return/2}. By default, the first 4 lines of the
+%%% pretty-printed exception info are returned, but this can be controlled
+%%% with the `Lines' parameter.
+%%%
+%%% Note that a stacktrace is generated inside this function.
+%%% @end
+format_exception(Class, Reason, Lines) ->
+    PrintF = fun(Term, I) ->
+		     io_lib_pretty:print(
+		       Term, I, columns(), ?LINEMAX, ?CHAR_MAX,
+		       record_print_fun())
+	     end,
+    StackF = fun(_, _, _) -> false end,
+    lines(Lines, lib:format_exception(
+		   1, Class, Reason, erlang:get_stacktrace(), StackF, PrintF)).
+
+columns() ->
+    case io:columns() of
+	{ok, N} -> N;
+	_-> 80
+    end.
+
+lines(infinity, S) -> S;
+lines(N, S) ->
+    [L1|Ls] = re:split(iolist_to_binary([S]), <<"\n">>, [{return,list}]),
+    [L1|["\n" ++ L || L <- lists:sublist(Ls, 1, N-1)]].
+
+record_print_fun() ->
+    fun(_,_) -> no end.
 
 %%% @spec (Attr, Context) -> any()
 %%% Attr = module | function | arity | options

@@ -21,7 +21,7 @@ __Authors:__ : Ulf Wiger ([`ulf@feuerlabs.com`](mailto:ulf@feuerlabs.com)).<a na
 ##Function Index##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#parse_transform-2">parse_transform/2</a></td><td>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#format_error-1">format_error/1</a></td><td></td></tr><tr><td valign="top"><a href="#parse_transform-2">parse_transform/2</a></td><td>
 Searches for calls to pseudo functions in the module <code>codegen</code>,
 and converts the corresponding erlang code to a data structure
 representing the abstract form of that code.</td></tr></table>
@@ -30,6 +30,15 @@ representing the abstract form of that code.</td></tr></table>
 <a name="functions"></a>
 
 ##Function Details##
+
+<a name="format_error-1"></a>
+
+###format_error/1##
+
+
+
+
+`format_error(E) -> any()`
 
 <a name="parse_transform-2"></a>
 
