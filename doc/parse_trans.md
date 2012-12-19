@@ -96,7 +96,7 @@ Performs a transform of <code>Forms</code> using the fun <code>Fun(Form)</code>.
 Reads debug_info from the beam file Beam and returns a string containing
 the pretty-printed corresponding erlang source code.</td></tr><tr><td valign="top"><a href="#pp_beam-2">pp_beam/2</a></td><td>
 Reads debug_info from the beam file Beam and pretty-prints it as
-Erlang source code, storing it in the file Out.</td></tr><tr><td valign="top"><a href="#pp_src-2">pp_src/2</a></td><td>Pretty-prints the erlang source code corresponding to Forms into Out.</td></tr><tr><td valign="top"><a href="#replace_function-4">replace_function/4</a></td><td></td></tr><tr><td valign="top"><a href="#return-2">return/2</a></td><td>Checks the transformed result for errors and warnings.</td></tr><tr><td valign="top"><a href="#revert-1">revert/1</a></td><td>Reverts back from Syntax Tools format to Erlang forms.</td></tr><tr><td valign="top"><a href="#top-3">top/3</a></td><td></td></tr><tr><td valign="top"><a href="#transform-4">transform/4</a></td><td>
+Erlang source code, storing it in the file Out.</td></tr><tr><td valign="top"><a href="#pp_src-2">pp_src/2</a></td><td>Pretty-prints the erlang source code corresponding to Forms into Out.</td></tr><tr><td valign="top"><a href="#replace_function-4">replace_function/4</a></td><td></td></tr><tr><td valign="top"><a href="#return-2">return/2</a></td><td>Checks the transformed result for errors and warnings.</td></tr><tr><td valign="top"><a href="#revert-1">revert/1</a></td><td>Reverts back from Syntax Tools format to Erlang forms.</td></tr><tr><td valign="top"><a href="#revert_form-1">revert_form/1</a></td><td>Reverts a single form back from Syntax Tools format to Erlang forms.</td></tr><tr><td valign="top"><a href="#top-3">top/3</a></td><td></td></tr><tr><td valign="top"><a href="#transform-4">transform/4</a></td><td>
 Makes one pass.</td></tr></table>
 
 
@@ -524,7 +524,30 @@ Reverts back from Syntax Tools format to Erlang forms.
 
 Note that the Erlang forms are a subset of the Syntax Tools
 syntax tree, so this function is safe to call even on a list of
-regular Erlang forms.<a name="top-3"></a>
+regular Erlang forms.<a name="revert_form-1"></a>
+
+###revert_form/1##
+
+
+
+
+<pre>revert_form(F::Tree) -&gt; Form</pre>
+<br></br>
+
+
+
+
+Reverts a single form back from Syntax Tools format to Erlang forms.
+
+
+`erl_syntax:revert/1` has had a long-standing bug where it doesn't
+completely revert attribute forms. This function deals properly with those
+cases.
+
+
+Note that the Erlang forms are a subset of the Syntax Tools
+syntax tree, so this function is safe to call even on a regular Erlang
+form.<a name="top-3"></a>
 
 ###top/3##
 

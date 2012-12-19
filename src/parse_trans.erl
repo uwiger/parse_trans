@@ -40,6 +40,7 @@
 	 transform/4,
          depth_first/4,
          revert/1,
+	 revert_form/1,
 	 format_exception/2, format_exception/3,
 	 return/2
         ]).
@@ -513,8 +514,25 @@ get_orig_syntax_tree(File) ->
 %%%
 -spec revert(forms()) ->
     forms().
-revert(Tree) ->
-    [erl_syntax:revert(T) || T <- lists:flatten(Tree)].
+revert(Tree) when is_list(Tree) ->
+    [revert_form(T) || T <- lists:flatten(Tree)].
+
+%%% @spec (Tree) -> Form
+%%%
+%%% @doc Reverts a single form back from Syntax Tools format to Erlang forms.
+%%% <p>`erl_syntax:revert/1' has had a long-standing bug where it doesn't
+%%% completely revert attribute forms. This function deals properly with those
+%%% cases.</p>
+%%% <p>Note that the Erlang forms are a subset of the Syntax Tools
+%%% syntax tree, so this function is safe to call even on a regular Erlang
+%%% form.</p>
+revert_form(F) ->
+    case erl_syntax:revert(F) of
+	{attribute,L,A,Tree} when element(1,Tree) == tree ->
+	    {attribute,L,A,erl_syntax:revert(Tree)};
+	Result ->
+	    Result
+    end.
 
 %%% @spec (Forms, Context) -> Forms | {error,Es,Ws} | {warnings,Forms,Ws}
 %%%
