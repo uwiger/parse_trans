@@ -95,6 +95,19 @@
 %% the body. The arguments of the function clause are ignored, but can be
 %% used to ensure that all necessary variables are known to the compiler.
 %%
+%% <h2>gen_module/3</h2>
+%%
+%% Generates abstract forms for a complete module definition.
+%%
+%% Usage: `codegen:gen_module(ModuleName, Exports, Functions)'
+%%
+%% `ModuleName' is either an atom or a <code>{'$var', V}</code> reference.
+%%
+%% `Exports' is a list of `{Function, Arity}' tuples.
+%%
+%% `Functions' is a list of `{Name, Fun}' tuples analogous to that for
+%% `gen_functions/1'.
+%%
 %% <h2>Variable substitution</h2>
 %%
 %% It is possible to do some limited expansion (importing a value
@@ -145,6 +158,11 @@ xform_fun(application, Form, _Ctxt, Acc) ->
     MFA = erl_syntax_lib:analyze_application(Form),
     L = erl_syntax:get_pos(Form),
     case MFA of
+	{codegen, {gen_module, 3}} ->
+	    [NameF, ExportsF, FunsF] =
+		erl_syntax:application_arguments(Form),
+	    NewForms = gen_module(NameF, ExportsF, FunsF, L, Acc),
+	    {NewForms, Acc};
 	{codegen, {gen_function, 2}} ->
 	    [NameF, FunF] =
 	    	erl_syntax:application_arguments(Form),
@@ -176,6 +194,54 @@ xform_fun(application, Form, _Ctxt, Acc) ->
     end;
 xform_fun(_, Form, _Ctxt, Acc) ->
     {Form, Acc}.
+
+gen_module(NameF, ExportsF, FunsF, L, Acc) ->
+    try gen_module_(NameF, ExportsF, FunsF, L, Acc)
+    catch
+	error:E ->
+	    ErrStr = parse_trans:format_exception(error, E),
+	    {error, {L, ?MODULE, ErrStr}}
+    end.
+
+gen_module_(NameF, ExportsF, FunsF, L0, Acc) ->
+    P = erl_syntax:get_pos(NameF),
+    ModF = case parse_trans:revert_form(NameF) of
+	       {atom,_,_} = Am -> Am;
+	       {tuple,_,[{atom,_,'$var'},
+			 {var,_,V}]} ->
+		   {var,P,V}
+	   end,
+    cons(
+      {cons,P,
+       {tuple,P,
+	[{atom,P,attribute},
+	 {integer,P,1},
+	 {atom,P,module},
+	 ModF]},
+       substitute(
+	 abstract(
+	   [{attribute,P,export,
+	     lists:map(
+	       fun(TupleF) ->
+		       [F,A] = erl_syntax:tuple_elements(TupleF),
+		       {erl_syntax:atom_value(F), erl_syntax:integer_value(A)}
+	       end, erl_syntax:list_elements(ExportsF))}]))},
+      lists:map(
+	fun(FTupleF) ->
+		Pos = erl_syntax:get_pos(FTupleF),
+		[FName, FFunF] = erl_syntax:tuple_elements(FTupleF),
+		gen_function(FName, FFunF, L0, Pos, Acc)
+	end, erl_syntax:list_elements(FunsF))).
+
+cons({cons,L,H,T}, L2) ->
+    {cons,L,H,cons(T, L2)};
+cons({nil,L}, [H|T]) ->
+    Pos = erl_syntax:get_pos(H),
+    {cons,L,H,cons({nil,Pos}, T)};
+cons({nil,L}, []) ->
+    {nil,L}.
+
+
 
 gen_function(NameF, FunF, L0, L, Acc) ->
     try gen_function_(NameF, FunF, L, Acc)

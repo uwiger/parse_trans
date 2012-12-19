@@ -117,6 +117,20 @@ a data type representing the abstract form of the list of expressions in
 the body. The arguments of the function clause are ignored, but can be
 used to ensure that all necessary variables are known to the compiler.
 
+##gen_module/3##
+
+
+Generates abstract forms for a complete module definition.
+
+Usage: `codegen:gen_module(ModuleName, Exports, Functions)`
+
+`ModuleName` is either an atom or a `{'$var', V}` reference.
+
+`Exports` is a list of `{Function, Arity}` tuples.
+
+`Functions` is a list of `{Name, Fun}` tuples analogous to that for
+`gen_functions/1`.
+
 ##Variable substitution##
 
 
