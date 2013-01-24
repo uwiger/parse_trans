@@ -319,9 +319,10 @@ do(Transform, Fun, Acc, Forms, Options) ->
     Context = initial_context(Forms, Options),
     File = Context#context.file,
     try Transform(Fun, Acc, Forms, Context) of
-	{NewForms, _} = Result when is_list(NewForms) ->
-	    optionally_pretty_print(NewForms, Options, Context),
-	    Result
+	{NewForms, Acc1} when is_list(NewForms) ->
+	    NewForms1 = optionally_renumber(NewForms, Options),
+	    optionally_pretty_print(NewForms1, Options, Context),
+	    {NewForms1, Acc1}
     catch
 	error:Reason ->
 	    {error,
@@ -339,8 +340,9 @@ top(F, Forms, Options) ->
     try F(Forms, Context) of
 	{error, Reason} -> {error, Reason};
 	NewForms when is_list(NewForms) ->
-            optionally_pretty_print(NewForms, Options, Context),
-	    NewForms
+	    NewForms1 = optionally_renumber(NewForms, Options),
+            optionally_pretty_print(NewForms1, Options, Context),
+	    NewForms1
     catch
         error:Reason ->
             {error,
@@ -397,6 +399,7 @@ insert_below([F|Rest], Insert) ->
 optionally_pretty_print(Result, Options, Context) ->
     DoPP = option_value(pt_pp_src, Options, Result),
     DoLFs = option_value(pt_log_forms, Options, Result),
+    io:fwrite("DoPP = ~p; DoLFs = ~p~n", [DoPP, DoLFs]),
     File = Context#context.file,
     if DoLFs ->
 	    Out1 = outfile(File, forms),
@@ -412,6 +415,46 @@ optionally_pretty_print(Result, Options, Context) ->
             pp_src(Result, Out2),
             io:fwrite("Pretty-printed in ~p~n", [Out2]);
        true -> ok
+    end.
+
+optionally_renumber(Result, Options) ->
+    case option_value(pt_renumber, Options, Result) of
+	true ->
+	    io:fwrite("renumbering...~n", []),
+	    Rev = revert(Result),
+	    renumber_(Rev);
+	false ->
+	    Result
+    end.
+
+renumber_(L) when is_list(L) ->
+    {Result, _} = renumber_(L, 1),
+    Result.
+
+renumber_(L, Acc) when is_list(L) ->
+    lists:mapfoldl(fun renumber_/2, Acc, L);
+renumber_(T, Prev) when is_tuple(T) ->
+    case is_form(T) of
+	true ->
+	    New = Prev+1,
+	    T1 = setelement(2, T, New),
+	    {Res, NewAcc} = renumber_(tuple_to_list(T1), New),
+	    {list_to_tuple(Res), NewAcc};
+	false ->
+	    L = tuple_to_list(T),
+	    {Res, NewAcc} = renumber_(L, Prev),
+	    {list_to_tuple(Res), NewAcc}
+    end;
+renumber_(X, Prev) ->
+    {X, Prev}.
+
+is_form(T) when element(1,T)==type -> true;
+is_form(T) ->
+    try erl_syntax:type(T),
+	 true
+    catch
+	error:_ ->
+	    false
     end.
 
 option_value(Key, Options, Result) ->
