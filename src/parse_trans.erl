@@ -291,9 +291,7 @@ function_exists(Fname, Arity, Forms) ->
     #context{}.
 initial_context(Forms, Options) ->
     File = get_file(Forms),
-%%    io:fwrite("File = ~p~n", [File]),
     Module = get_module(Forms),
-%%    io:fwrite("Module = ~p~n", [Module]),
     #context{file = File,
              module = Module,
              options = Options}.
@@ -399,7 +397,6 @@ insert_below([F|Rest], Insert) ->
 optionally_pretty_print(Result, Options, Context) ->
     DoPP = option_value(pt_pp_src, Options, Result),
     DoLFs = option_value(pt_log_forms, Options, Result),
-    io:fwrite("DoPP = ~p; DoLFs = ~p~n", [DoPP, DoLFs]),
     File = Context#context.file,
     if DoLFs ->
 	    Out1 = outfile(File, forms),
@@ -696,7 +693,6 @@ context(options,  #context{options = O} ) -> O.
 -spec do_inspect(insp_f(), term(), forms(), #context{}) ->
     term().
 do_inspect(F, Acc, Forms, Context) ->
-%%    io:fwrite("do_inspect/4~n", []),
     F1 =
         fun(Form, Acc0) ->
                 Type = type(Form),

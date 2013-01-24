@@ -1,6 +1,7 @@
 -module(test_exprecs).
 
--compile({pt_pp_src, true}).
+-pt_renumber(true).
+-pt_log_forms(true).
 
 -export([f/0]).
 

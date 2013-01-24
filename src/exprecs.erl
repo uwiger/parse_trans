@@ -63,6 +63,9 @@
 %%     {new,'#new-r'([])}.
 %% </pre>
 %%
+%% Compiling this (assuming exprecs is in the path) will produce the
+%% following code.
+%%
 %% <pre>
 %% -module(test_exprecs).
 %% -compile({pt_pp_src,true}).
@@ -80,6 +83,7 @@
 %%          '#get-'/2,
 %%          '#set-'/2,
 %%          '#fromlist-'/2,
+%%          '#lens-'/2,
 %%          '#new-r'/0,
 %%          '#new-r'/1,
 %%          '#get-r'/2,
@@ -88,6 +92,7 @@
 %%          '#fromlist-r'/1,
 %%          '#fromlist-r'/2,
 %%          '#info-r'/1,
+%%          '#lens-r'/1,
 %%          '#new-s'/0,
 %%          '#new-s'/1,
 %%          '#get-s'/2,
@@ -95,7 +100,8 @@
 %%          '#pos-s'/1,
 %%          '#fromlist-s'/1,
 %%          '#fromlist-s'/2,
-%%          '#info-s'/1]).
+%%          '#info-s'/1,
+%%          '#lens-s'/1]).
 %%
 %% -type '#prop-r'() :: {a, integer()} | {b, integer()} | {c, integer()}.
 %% -type '#attr-r'() :: a | b | c.
@@ -184,6 +190,15 @@
 %% '#fromlist-'(Vals, Rec) when is_record(Rec, s) -&gt;
 %%     '#fromlist-s'(Vals, Rec).
 %%
+%% -spec '#lens-'('#prop-r'(), r) -&gt;
+%%                  {fun((#r{}) -&gt; any()), fun((any(), #r{}) -&gt; #r{})};
+%%              ('#prop-s'(), s) -&gt;
+%%                  {fun((#s{}) -&gt; any()), fun((any(), #s{}) -&gt; #s{})}.
+%% '#lens-'(Attr, r) -&gt;
+%%     '#lens-r'(Attr);
+%% '#lens-'(Attr, s) -&gt;
+%%     '#lens-s'(Attr).
+%%
 %% -spec '#new-r'() -&gt; #r{}.
 %% '#new-r'() -&gt;
 %%     #r{}.
@@ -261,6 +276,30 @@
 %% '#info-r'(size) -&gt;
 %%     record_info(size, r).
 %%
+%% -spec '#lens-r'('#prop-r'()) -&gt;
+%%                   {fun((#r{}) -&gt; any()), fun((any(), #r{}) -&gt; #r{})}.
+%% '#lens-r'(a) -&gt;
+%%     {fun(R) -&gt;
+%%             '#get-r'(a, R)
+%%      end,
+%%      fun(X, R) -&gt;
+%%             '#set-r'([{a,X}], R)
+%%      end};
+%% '#lens-r'(b) -&gt;
+%%     {fun(R) -&gt;
+%%             '#get-r'(b, R)
+%%      end,
+%%      fun(X, R) -&gt;
+%%             '#set-r'([{b,X}], R)
+%%      end};
+%% '#lens-r'(c) -&gt;
+%%     {fun(R) -&gt;
+%%             '#get-r'(c, R)
+%%      end,
+%%      fun(X, R) -&gt;
+%%             '#set-r'([{c,X}], R)
+%%      end}.
+%%
 %% -spec '#new-s'() -&gt; #s{}.
 %% '#new-s'() -&gt;
 %%     #s{}.
@@ -324,6 +363,16 @@
 %% '#info-s'(size) -&gt;
 %%     record_info(size, s).
 %%
+%% -spec '#lens-s'('#prop-s'()) -&gt;
+%%                   {fun((#s{}) -&gt; any()), fun((any(), #s{}) -&gt; #s{})}.
+%% '#lens-s'(a) -&gt;
+%%     {fun(R) -&gt;
+%%             '#get-s'(a, R)
+%%      end,
+%%      fun(X, R) -&gt;
+%%             '#set-s'([{a,X}], R)
+%%      end}.
+%%
 %% f() -&gt;
 %%     {new,'#new-r'([])}.
 %%
@@ -351,18 +400,20 @@
 %% atom (a valid function or type name).
 %%
 %% `operation' is one of:
-%% <ul>
-%% <li>`new'</li>
-%% <li>`get'</li>
-%% <li>`set'</li>
-%% <li>`fromlist'</li>
-%% <li>`info'</li>
-%% <li>`pos'</li>
-%% <li>`is_record'</li>
-%% <li>`convert'</li>
-%% <li>`prop'</li>
-%% <li>`attr'</li>
-%% </ul>
+%% <dl>
+%% <dt>`new'</dt> <dd>Creates a new record</dd>
+%% <dt>`get'</dt> <dd>Retrieves given attribute values from a record</dd>
+%% <dt>`set'</dt> <dd>Sets given attribute values in a record</dd>
+%% <dt>`fromlist'</dt> <dd>Creates a record from a key-value list</dd>
+%% <dt>`info'</dt> <dd>Equivalent to record_info/2</dd>
+%% <dt>`pos'</dt> <dd>Returns the position of a given attribute</dd>
+%% <dt>`is_record'</dt> <dd>Tests if a value is a specific record</dd>
+%% <dt>`convert'</dt> <dd>Converts an old record to the current version</dd>
+%% <dt>`prop'</dt> <dd>Used only in type specs</dd>
+%% <dt>`attr'</dt> <dd>Used only in type specs</dd>
+%% <dt>`lens'</dt> <dd>Returns a 'lens' (an accessor pair) as described in
+%%              [http://github.com/jlouis/erl-lenses]</dd>
+%% </dl>
 %%
 %% @end
 
@@ -483,7 +534,8 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
 	       {fname(is_record, Acc), 2},
 	       {fname(get, Acc), 2},
 	       {fname(set, Acc), 2},
-	       {fname(fromlist, Acc), 2} |
+	       {fname(fromlist, Acc), 2},
+	       {fname(lens, Acc), 2} |
 	       lists:flatmap(
 		 fun(Rec) ->
 			 RecS = atom_to_list(Rec),
@@ -494,7 +546,8 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
 			  {fname(pos, RecS, Acc), 1},
 			  {fname(fromlist, RecS, Acc), 1},
 			  {fname(fromlist, RecS, Acc), 2},
-			  {fname(info, RecS, Acc), 1}]
+			  {fname(info, RecS, Acc), 1},
+			  {fname(lens, RecS, Acc), 1}]
 		 end, Es)] ++ version_exports(Vsns, Acc),
     {[], Form,
      [{attribute,L,export,Exports}],
@@ -610,7 +663,8 @@ generate_accessors(L, Acc) ->
        f_isrec_2(Acc, L),
        f_get(Acc, L),
        f_set(Acc, L),
-       f_fromlist(Acc, L) |
+       f_fromlist(Acc, L),
+       f_lens_(Acc, L)|
        lists:append(
 	 lists:map(
 	   fun(Rname) ->
@@ -622,7 +676,8 @@ generate_accessors(L, Acc) ->
 		    f_fromlist_1(Rname, L, Acc),
 		    f_fromlist_2(Rname, Fields, L, Acc),
 		    f_pos_1(Rname, Fields, L, Acc),
-		    f_info_1(Rname, Acc, L)]
+		    f_info_1(Rname, Acc, L),
+		    f_lens_1(Rname, Fields, L, Acc)]
 	   end, Acc#pass1.exports))] ++ version_accessors(L, Acc)).
 
 get_flds(Rname, #pass1{records = Rs}) ->
@@ -749,21 +804,21 @@ funspec(L, Fname, Head, Returns) ->
 
 t_prop(L, Rname, Acc) -> {type, L, fname(prop, Rname, Acc), []}.
 t_attr(L, Rname, Acc) -> {type, L, fname(attr, Rname, Acc), []}.
-t_union(L, Alt)  -> {type, L, union, lists:usort(Alt)}.
-t_any(L)         -> {type, L, any, []}.
-t_atom(L)        -> {type, L, atom, []}.
-t_atom(L, A)     -> {atom, L, A}.
-t_integer(L)     -> {type, L, integer, []}.
-t_integer(L, I)  -> {integer, L, I}.
-t_list(L, Es)    -> {type, L, list, Es}.
-%% t_tuple(L, Es) -> {type, L, tuple, Es}.
+t_union(L, Alt)   -> {type, L, union, lists:usort(Alt)}.
+t_any(L)          -> {type, L, any, []}.
+t_atom(L)         -> {type, L, atom, []}.
+t_atom(L, A)      -> {atom, L, A}.
+t_integer(L)      -> {type, L, integer, []}.
+t_integer(L, I)   -> {integer, L, I}.
+t_list(L, Es)     -> {type, L, list, Es}.
+t_fun(L, As, Res) -> {type, L, 'fun', [{type, L, product, As}, Res]}.
+t_tuple(L, Es)    -> {type, L, tuple, Es}.
 t_record(L, A)   -> {type, L, record, [{atom, L, A}]}.
 
 f_set_2(Rname, Flds, L, Acc) ->
     Fname = fname(set, Rname, Acc),
     TRec = t_record(L, Rname),
-    [funspec(L, Fname, [t_list(L, [t_prop(L, Rname, Acc)]), TRec],
-	     TRec),
+    [funspec(L, Fname, [t_list(L, [t_prop(L, Rname, Acc)]), TRec], TRec),
      {function, L, Fname, 2,
       [{clause, L, [{var, L, 'Vals'}, {var, L, 'Rec'}], [],
 	[{match, L, {var, L, 'F'},
@@ -1162,6 +1217,47 @@ f_convert(_Vsns, L, Acc) ->
                        [{var, L, 'Rname'}]}]},
                     {var, L, 'Discarded'}]}]
       }]}.
+
+f_lens_(#pass1{exports = Es} = Acc, L) ->
+    Fname = fname(lens, Acc),
+    [
+     funspec(L, Fname, [ {[t_prop(L, Rname, Acc), t_atom(L, Rname)],
+     			  t_tuple(L, [t_fun(L, [t_record(L, Rname)], t_any(L)),
+     				      t_fun(L, [t_any(L),
+     						t_record(L, Rname)],
+     					    t_record(L, Rname))])}
+     			 || Rname <- Es]),
+     {function, L, Fname, 2,
+      [{clause, L, [{var, L, 'Attr'}, {atom, L, Re}], [],
+	[{call, L, {atom, L, fname(lens, Re, Acc)}, [{var, L, 'Attr'}]}]}
+	 || Re <- Es]}
+    ].
+
+f_lens_1(Rname, Flds, L, Acc) ->
+    Fname = fname(lens, Rname, Acc),
+    [funspec(L, Fname, [ {[t_prop(L, Rname, Acc)],
+     			  t_tuple(L, [t_fun(L, [t_record(L, Rname)], t_any(L)),
+     				      t_fun(L, [t_any(L),
+     						t_record(L, Rname)],
+     					    t_record(L, Rname))])} ]),
+     {function, L, Fname, 1,
+      [{clause, L, [{atom, L, Attr}], [],
+	[{tuple, L, [{'fun', L,
+		      {clauses,
+		       [{clause, L, [{var, L, 'R'}], [],
+			 [{call, L, {atom, L, fname(get, Rname, Acc)},
+			   [{atom, L, Attr}, {var, L, 'R'}]}]}
+		       ]}},
+		     {'fun', L,
+		      {clauses,
+		       [{clause, L, [{var, L, 'X'}, {var, L, 'R'}], [],
+			 [{call, L, {atom, L, fname(set, Rname, Acc)},
+			   [{cons,L, {tuple, L, [{atom, L, Attr},
+						 {var, L, 'X'}]}, {nil,L}},
+			    {var, L, 'R'}]}]
+			}]}}
+		    ]}]} || Attr <- Flds]
+     }].
 
 %%% ========== generic parse_transform stuff ==============
 

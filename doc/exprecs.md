@@ -47,7 +47,10 @@ to lay out access functions for the exported records:As an example, consider the
   -record(s,{a}).
   -export_records([r,s]).
   f() ->
-      {new,'#new-r'([])}.</pre><pre>
+      {new,'#new-r'([])}.</pre>
+
+Compiling this (assuming exprecs is in the path) will produce the
+following code.<pre>
   -module(test_exprecs).
   -compile({pt_pp_src,true}).
   -export([f/0]).
@@ -64,6 +67,7 @@ to lay out access functions for the exported records:As an example, consider the
            '#get-'/2,
            '#set-'/2,
            '#fromlist-'/2,
+           '#lens-'/2,
            '#new-r'/0,
            '#new-r'/1,
            '#get-r'/2,
@@ -72,6 +76,7 @@ to lay out access functions for the exported records:As an example, consider the
            '#fromlist-r'/1,
            '#fromlist-r'/2,
            '#info-r'/1,
+           '#lens-r'/1,
            '#new-s'/0,
            '#new-s'/1,
            '#get-s'/2,
@@ -79,7 +84,8 @@ to lay out access functions for the exported records:As an example, consider the
            '#pos-s'/1,
            '#fromlist-s'/1,
            '#fromlist-s'/2,
-           '#info-s'/1]).
+           '#info-s'/1,
+           '#lens-s'/1]).
   -type '#prop-r'() :: {a, integer()} | {b, integer()} | {c, integer()}.
   -type '#attr-r'() :: a | b | c.
   -type '#prop-s'() :: {a, any()}.
@@ -156,6 +162,14 @@ to lay out access functions for the exported records:As an example, consider the
       '#fromlist-r'(Vals, Rec);
   '#fromlist-'(Vals, Rec) when is_record(Rec, s) ->
       '#fromlist-s'(Vals, Rec).
+  -spec '#lens-'('#prop-r'(), r) ->
+                   {fun((#r{}) -> any()), fun((any(), #r{}) -> #r{})};
+               ('#prop-s'(), s) ->
+                   {fun((#s{}) -> any()), fun((any(), #s{}) -> #s{})}.
+  '#lens-'(Attr, r) ->
+      '#lens-r'(Attr);
+  '#lens-'(Attr, s) ->
+      '#lens-s'(Attr).
   -spec '#new-r'() -> #r{}.
   '#new-r'() ->
       #r{}.
@@ -225,6 +239,29 @@ to lay out access functions for the exported records:As an example, consider the
       record_info(fields, r);
   '#info-r'(size) ->
       record_info(size, r).
+  -spec '#lens-r'('#prop-r'()) ->
+                    {fun((#r{}) -> any()), fun((any(), #r{}) -> #r{})}.
+  '#lens-r'(a) ->
+      {fun(R) ->
+              '#get-r'(a, R)
+       end,
+       fun(X, R) ->
+              '#set-r'([{a,X}], R)
+       end};
+  '#lens-r'(b) ->
+      {fun(R) ->
+              '#get-r'(b, R)
+       end,
+       fun(X, R) ->
+              '#set-r'([{b,X}], R)
+       end};
+  '#lens-r'(c) ->
+      {fun(R) ->
+              '#get-r'(c, R)
+       end,
+       fun(X, R) ->
+              '#set-r'([{c,X}], R)
+       end}.
   -spec '#new-s'() -> #s{}.
   '#new-s'() ->
       #s{}.
@@ -280,6 +317,15 @@ to lay out access functions for the exported records:As an example, consider the
       record_info(fields, s);
   '#info-s'(size) ->
       record_info(size, s).
+  -spec '#lens-s'('#prop-s'()) ->
+                    {fun((#s{}) -> any()), fun((any(), #s{}) -> #s{})}.
+  '#lens-s'(a) ->
+      {fun(R) ->
+              '#get-s'(a, R)
+       end,
+       fun(X, R) ->
+              '#set-s'([{a,X}], R)
+       end}.
   f() ->
       {new,'#new-r'([])}.</pre>
 
@@ -301,25 +347,105 @@ Exprecs will substitute the control atoms with the string values of the
 corresponding items. The result will then be flattened and converted to an
 atom (a valid function or type name).`operation` is one of:
 
-* `new`
 
-* `get`
 
-* `set`
+<dt><code>new</code></dt>
 
-* `fromlist`
+ 
 
-* `info`
+<dd>Creates a new record</dd>
 
-* `pos`
 
-* `is_record`
 
-* `convert`
 
-* `prop`
+<dt><code>get</code></dt>
 
-* `attr`
+ 
+
+<dd>Retrieves given attribute values from a record</dd>
+
+
+
+
+<dt><code>set</code></dt>
+
+ 
+
+<dd>Sets given attribute values in a record</dd>
+
+
+
+
+<dt><code>fromlist</code></dt>
+
+ 
+
+<dd>Creates a record from a key-value list</dd>
+
+
+
+
+<dt><code>info</code></dt>
+
+ 
+
+<dd>Equivalent to record_info/2</dd>
+
+
+
+
+<dt><code>pos</code></dt>
+
+ 
+
+<dd>Returns the position of a given attribute</dd>
+
+
+
+
+<dt><code>is_record</code></dt>
+
+ 
+
+<dd>Tests if a value is a specific record</dd>
+
+
+
+
+<dt><code>convert</code></dt>
+
+ 
+
+<dd>Converts an old record to the current version</dd>
+
+
+
+
+<dt><code>prop</code></dt>
+
+ 
+
+<dd>Used only in type specs</dd>
+
+
+
+
+<dt><code>attr</code></dt>
+
+ 
+
+<dd>Used only in type specs</dd>
+
+
+
+
+<dt><code>lens</code></dt>
+
+ 
+
+<dd>Returns a 'lens' (an accessor pair) as described in
+<a href="http://github.com/jlouis/erl-lenses" target="_top"><tt>http://github.com/jlouis/erl-lenses</tt></a></dd>
+
 
 
 
