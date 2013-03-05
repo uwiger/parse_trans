@@ -136,9 +136,8 @@
 %% '#pos-'(s, Attr) -&gt;
 %%     '#pos-s'(Attr).
 %%
-%% -spec '#is_record-'(#r{}) -&gt; true;
-%%                    (#s{}) -&gt; true;
-%%                    (any()) -&gt; false.
+%% -spec '#is_record-'(any()) -&gt; boolean().
+%%                    
 %% '#is_record-'(X) -&gt;
 %%     if
 %%         is_record(X, r) -&gt;
@@ -149,9 +148,8 @@
 %%             false
 %%     end.
 %%
-%% -spec '#is_record-'(r, #r{}) -&gt; true;
-%%                    (s, #s{}) -&gt; true;
-%%                    (any(), any()) -&gt; false.
+%% -spec '#is_record-'(any(), any()) -&gt; boolean().
+%%                    
 %% '#is_record-'(s, Rec) when tuple_size(Rec) == 2, element(1, Rec) == s -&gt;
 %%     true;
 %% '#is_record-'(r, Rec) when tuple_size(Rec) == 4, element(1, Rec) == r -&gt;
@@ -756,6 +754,7 @@ t_atom(L, A)     -> {atom, L, A}.
 t_integer(L)     -> {type, L, integer, []}.
 t_integer(L, I)  -> {integer, L, I}.
 t_list(L, Es)    -> {type, L, list, Es}.
+t_boolean(L)     -> {type, L, boolean, []}.
 %% t_tuple(L, Es) -> {type, L, tuple, Es}.
 t_record(L, A)   -> {type, L, record, [{atom, L, A}]}.
 
@@ -929,10 +928,14 @@ f_info(Acc, L) ->
 f_isrec_2(#pass1{records = Rs, exports = Es} = Acc, L) ->
     Fname = list_to_atom(fname_prefix(is_record, Acc)),
     Info = [{R,length(As) + 1} || {R,As} <- Rs, lists:member(R, Es)],
-    [funspec(L, Fname,
-	     [{[t_atom(L, R), t_record(L, R)], t_atom(L, true)}
-	      || R <- Es] ++
-		 [{[t_any(L), t_any(L)], t_atom(L, false)}]),
+    [%% This contract is correct, but is ignored by Dialyzer because it
+     %% has overlapping domains:
+     %% funspec(L, Fname,
+     %% 	     [{[t_atom(L, R), t_record(L, R)], t_atom(L, true)}
+     %% 	      || R <- Es] ++
+     %% 		 [{[t_any(L), t_any(L)], t_atom(L, false)}]),
+     %% This is less specific, but more useful to Dialyzer:
+     funspec(L, Fname, [{[t_any(L), t_any(L)], t_boolean(L)}]),
      {function, L, Fname, 2,
       lists:map(
 	fun({R, Ln}) ->
@@ -1007,10 +1010,14 @@ f_pos_2(#pass1{exports = Es} = Acc, L) ->
 
 f_isrec_1(Acc, L) ->
     Fname = list_to_atom(fname_prefix(is_record, Acc)),
-    [funspec(L, Fname,
-	     [{[t_record(L, R)], t_atom(L, true)}
-	      || R <- Acc#pass1.exports]
-	     ++ [{[t_any(L)], t_atom(L, false)}]),
+    [%% This contract is correct, but is ignored by Dialyzer because it
+     %% has overlapping domains:
+     %% funspec(L, Fname,
+     %% 	     [{[t_record(L, R)], t_atom(L, true)}
+     %% 	      || R <- Acc#pass1.exports]
+     %% 	     ++ [{[t_any(L)], t_atom(L, false)}]),
+     %% This is less specific, but more useful to Dialyzer:
+     funspec(L, Fname, [{[t_any(L)], t_boolean(L)}]),
      {function, L, Fname, 1,
       [{clause, L,
 	[{var, L, 'X'}],
