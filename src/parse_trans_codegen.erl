@@ -196,10 +196,17 @@ xform_fun(_, Form, _Ctxt, Acc) ->
     {Form, Acc}.
 
 gen_module(NameF, ExportsF, FunsF, L, Acc) ->
-    try gen_module_(NameF, ExportsF, FunsF, L, Acc)
-    catch
-	error:E ->
-	    ErrStr = parse_trans:format_exception(error, E),
+    case erl_syntax:type(FunsF) of
+	list ->
+	    try gen_module_(NameF, ExportsF, FunsF, L, Acc)
+	    catch
+		error:E ->
+		    ErrStr = parse_trans:format_exception(error, E),
+		    {error, {L, ?MODULE, ErrStr}}
+	    end;
+	_ ->
+	    ErrStr = parse_trans:format_exception(
+		       error, "Argument must be a list"),
 	    {error, {L, ?MODULE, ErrStr}}
     end.
 
