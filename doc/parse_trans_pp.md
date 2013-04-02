@@ -8,22 +8,26 @@
 
 Generic parse transform library for Erlang.
 
-
-
 __Authors:__ : Ulf Wiger ([`ulf@feuerlabs.com`](mailto:ulf@feuerlabs.com)).<a name="description"></a>
 
 ##Description##
 
 
+
+
 This module contains some useful utility functions for inspecting
 the results of parse transforms or code generation.
 The function `main/1` is called from escript, and can be used to
-pretty-print debug info in a .beam file from a Linux shell.Using e.g. the following bash alias:
+pretty-print debug info in a .beam file from a Linux shell.
+
+Using e.g. the following bash alias:
 <pre>
    alias pp='escript $PARSE_TRANS_ROOT/ebin/parse_trans_pp.beam'</pre>
 
 
-a file could be pretty-printed using the following command:`$ pp ex_codegen.beam | less`<a name="index"></a>
+a file could be pretty-printed using the following command:
+
+`$ pp ex_codegen.beam | less`<a name="index"></a>
 
 ##Function Index##
 
@@ -44,8 +48,6 @@ Erlang source code, storing it in the file Out.</td></tr><tr><td valign="top"><a
 ###main/1##
 
 
-
-
 <pre>main(X1::[string()]) -&gt; any()</pre>
 <br></br>
 
@@ -55,12 +57,8 @@ Erlang source code, storing it in the file Out.</td></tr><tr><td valign="top"><a
 ###pp_beam/1##
 
 
-
-
 <pre>pp_beam(Beam::<a href="#type-filename">filename()</a>) -> string() | {error, Reason}</pre>
 <br></br>
-
-
 
 
 
@@ -70,12 +68,8 @@ the pretty-printed corresponding erlang source code.<a name="pp_beam-2"></a>
 ###pp_beam/2##
 
 
-
-
 <pre>pp_beam(Beam::<a href="#type-filename">filename()</a>, Out::<a href="#type-filename">filename()</a>) -> ok | {error, Reason}</pre>
 <br></br>
-
-
 
 
 
@@ -85,12 +79,8 @@ Erlang source code, storing it in the file Out.<a name="pp_src-2"></a>
 ###pp_src/2##
 
 
-
-
 <pre>pp_src(Forms0::Forms, Out::<a href="#type-filename">filename()</a>) -> ok</pre>
 <br></br>
-
-
 
 
 Pretty-prints the erlang source code corresponding to Forms into Out

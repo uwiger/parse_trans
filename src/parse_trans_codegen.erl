@@ -174,6 +174,11 @@ xform_fun(application, Form, _Ctxt, Acc) ->
 	    NewForm = gen_function(
 			NameF, FunF, L, erl_syntax:integer_value(LineF), Acc),
 	    {NewForm, Acc};
+	{codegen, {gen_function_alt, 3}} ->
+	    [NameF, FunF, AltF] =
+		erl_syntax:application_arguments(Form),
+	    NewForm = gen_function_alt(NameF, FunF, AltF, L, L, Acc),
+	    {NewForm, Acc};
 	{codegen, {gen_functions, 1}} ->
 	    [List] = erl_syntax:application_arguments(Form),
 	    Elems = erl_syntax:list_elements(List),
@@ -251,14 +256,22 @@ cons({nil,L}, []) ->
 
 
 gen_function(NameF, FunF, L0, L, Acc) ->
-    try gen_function_(NameF, FunF, L, Acc)
+    try gen_function_(NameF, FunF, [], L, Acc)
     catch
 	error:E ->
 	    ErrStr = parse_trans:format_exception(error, E),
 	    {error, {L0, ?MODULE, ErrStr}}
     end.
 
-gen_function_(NameF, FunF, L, Acc) ->
+gen_function_alt(NameF, FunF, AltF, L0, L, Acc) ->
+    try gen_function_(NameF, FunF, AltF, L, Acc)
+    catch
+	error:E ->
+	    ErrStr = parse_trans:format_exception(error, E),
+	    {error, {L0, ?MODULE, ErrStr}}
+    end.
+
+gen_function_(NameF, FunF, AltF, L, Acc) ->
     case erl_syntax:type(FunF) of
 	T when T==implicit_fun; T==fun_expr ->
 	    {Arity, Clauses} = gen_function_clauses(T, NameF, FunF, L, Acc),
@@ -304,13 +317,21 @@ gen_function_(NameF, FunF, L, Acc) ->
 				   abstract(Clauses))]
 			       }]}
 			    }, [{var,1,V} || V <- Vars1]}, Body1)]),
+	    AltC = case AltF of
+		       [] -> {nil,1};
+		       _ ->
+			   {Arity, AltC1} = gen_function_clauses(
+					      erl_syntax:type(AltF),
+					      NameF, AltF, L, Acc),
+			   substitute(abstract(AltC1))
+		   end,
 	    {tuple,1,[{atom,1,function},
 		      {integer, 1, L},
 		      NameF,
 		      {integer, 1, Arity},
 		      {call, 1, {remote, 1, {atom, 1, lists},
 				 {atom,1,flatten}},
-		       [RevLC]}]}
+		       [{op, 1, '++', RevLC, AltC}]}]}
     end.
 
 gen_pattern(G) ->

@@ -9,11 +9,11 @@
 
 Generic parse transform library for Erlang.
 
-
-
 __Authors:__ : Ulf Wiger ([`ulf.wiger@feuerlabs.com`](mailto:ulf.wiger@feuerlabs.com)).<a name="description"></a>
 
 ##Description##
+
+
 
 
 ...
@@ -109,19 +109,13 @@ Makes one pass.</td></tr></table>
 ###context/2##
 
 
-
-
 <pre>context(X1::Attr, Context) -&gt; any()</pre>
 <ul class="definitions"><li><pre>Attr = module | function | arity | options</pre></li></ul>
-
-
 
 
 Accessor function for the Context record.<a name="depth_first-4"></a>
 
 ###depth_first/4##
-
-
 
 
 <pre>depth_first(Fun::<a href="#type-xform_f_df">xform_f_df()</a>, Acc, Forms::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>) -> {<a href="#type-forms">forms()</a>, Acc} | {error, list()}</pre>
@@ -133,8 +127,6 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 ###do_depth_first/4##
 
 
-
-
 <pre>do_depth_first(F::<a href="#type-xform_f_df">xform_f_df()</a>, Acc::term(), Forms::<a href="#type-forms">forms()</a>, Context::#context{}) -> {<a href="#type-forms">forms()</a>, term()}</pre>
 <br></br>
 
@@ -142,8 +134,6 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 <a name="do_insert_forms-4"></a>
 
 ###do_insert_forms/4##
-
-
 
 
 <pre>do_insert_forms(X1::above | below, Insert::<a href="#type-forms">forms()</a>, Forms::<a href="#type-forms">forms()</a>, Context::#context{}) -> <a href="#type-forms">forms()</a></pre>
@@ -155,8 +145,6 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 ###do_inspect/4##
 
 
-
-
 <pre>do_inspect(F::<a href="#type-insp_f">insp_f()</a>, Acc::term(), Forms::<a href="#type-forms">forms()</a>, Context::#context{}) -> term()</pre>
 <br></br>
 
@@ -164,8 +152,6 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 <a name="do_transform-4"></a>
 
 ###do_transform/4##
-
-
 
 
 <pre>do_transform(F::<a href="#type-xform_f_rec">xform_f_rec()</a>, Acc::term(), Forms::<a href="#type-forms">forms()</a>, Context::#context{}) -> {<a href="#type-forms">forms()</a>, term()}</pre>
@@ -177,12 +163,8 @@ Accessor function for the Context record.<a name="depth_first-4"></a>
 ###error/3##
 
 
-
-
 <pre>error(R::Reason, F::Form, I::Info) -> <a href="#type-throw">throw()</a></pre>
 <ul class="definitions"><li><pre>Info = [{Key, Value}]</pre></li></ul>
-
-
 
 
 
@@ -192,15 +174,11 @@ Used to report errors detected during the parse transform.<a name="export_functi
 ###export_function/3##
 
 
-
-
 `export_function(F, Arity, Forms) -> any()`
 
 <a name="format_error-1"></a>
 
 ###format_error/1##
-
-
 
 
 <pre>format_error(Error::{atom(), term()}) -&gt; iolist()</pre>
@@ -212,12 +190,8 @@ Used to report errors detected during the parse transform.<a name="export_functi
 ###format_exception/2##
 
 
-
-
 <pre>format_exception(Class, Reason) -&gt; String</pre>
 <br></br>
-
-
 
 
 Equivalent to [`format_exception(Class, Reason, 4)`](#format_exception-3).<a name="format_exception-3"></a>
@@ -225,32 +199,28 @@ Equivalent to [`format_exception(Class, Reason, 4)`](#format_exception-3).<a nam
 ###format_exception/3##
 
 
-
-
 <pre>format_exception(Class, Reason, Lines) -&gt; String</pre>
 <ul class="definitions"><li><pre>Class = error | throw | exit</pre></li><li><pre>Reason = term()</pre></li><li><pre>Lines = integer() | infinity</pre></li></ul>
 
 
 
-
-
 Produces a few lines of user-friendly formatting of exception info
+
+
 
 This function is very similar to the exception pretty-printing in the shell,
 but returns a string that can be used as error info e.g. by error forms
 handled by [`return/2`](#return-2). By default, the first 4 lines of the
 pretty-printed exception info are returned, but this can be controlled
-with the `Lines` parameter.Note that a stacktrace is generated inside this function.<a name="function_exists-3"></a>
+with the `Lines` parameter.
+
+Note that a stacktrace is generated inside this function.<a name="function_exists-3"></a>
 
 ###function_exists/3##
 
 
-
-
 <pre>function_exists(Fname::atom(), Arity::integer(), Forms) -&gt; boolean()</pre>
 <br></br>
-
-
 
 
 
@@ -259,19 +229,13 @@ Checks whether the given function is defined in Forms.<a name="get_attribute-2">
 ###get_attribute/2##
 
 
-
-
 <pre>get_attribute(A, Forms) -&gt; any()</pre>
 <ul class="definitions"><li><pre>A = atom()</pre></li></ul>
-
-
 
 
 Returns the value of the first occurence of attribute A.<a name="get_attribute-3"></a>
 
 ###get_attribute/3##
-
-
 
 
 `get_attribute(A, Forms, Undef) -> any()`
@@ -281,12 +245,8 @@ Returns the value of the first occurence of attribute A.<a name="get_attribute-3
 ###get_file/1##
 
 
-
-
 <pre>get_file(Forms) -&gt; string()</pre>
 <br></br>
-
-
 
 
 
@@ -295,12 +255,8 @@ Returns the name of the file being compiled.<a name="get_module-1"></a>
 ###get_module/1##
 
 
-
-
 <pre>get_module(Forms) -&gt; atom()</pre>
 <br></br>
-
-
 
 
 
@@ -309,12 +265,8 @@ Returns the name of the module being compiled.<a name="get_orig_syntax_tree-1"><
 ###get_orig_syntax_tree/1##
 
 
-
-
 <pre>get_orig_syntax_tree(File) -&gt; Forms</pre>
 <br></br>
-
-
 
 
 
@@ -328,12 +280,8 @@ uses epp_dodger).<a name="get_pos-1"></a>
 ###get_pos/1##
 
 
-
-
 <pre>get_pos(I::list()) -&gt; integer()</pre>
 <br></br>
-
-
 
 
 
@@ -343,12 +291,8 @@ Tries to retrieve the line number from an erl_syntax form. Returns a
 ###initial_context/2##
 
 
-
-
 <pre>initial_context(Forms, Options) -&gt; #context{}</pre>
 <br></br>
-
-
 
 
 
@@ -360,19 +304,13 @@ name and the options passed to the transform function.<a name="inspect-4"></a>
 ###inspect/4##
 
 
-
-
 <pre>inspect(F::Fun, Acc::Forms, Forms::Acc, Options) -&gt; NewAcc</pre>
 <ul class="definitions"><li><pre>Fun = function()</pre></li></ul>
-
-
 
 
 Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).<a name="optionally_pretty_print-3"></a>
 
 ###optionally_pretty_print/3##
-
-
 
 
 <pre>optionally_pretty_print(Result::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>, Context::#context{}) -> ok</pre>
@@ -384,12 +322,8 @@ Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).<a name="o
 ###plain_transform/2##
 
 
-
-
 <pre>plain_transform(Fun, Forms) -> <a href="#type-forms">forms()</a></pre>
 <ul class="definitions"><li><pre>Fun = function()</pre></li><li><pre>Forms = <a href="#type-forms">forms()</a></pre></li></ul>
-
-
 
 
 
@@ -400,13 +334,19 @@ representation. The intention of this transform is for the fun to have a
 catch-all clause returning `continue`. This will ensure that it stays robust
 against additions to the language.
 
+
+
 `Fun(Form)` must return either of the following:
+
+
 
 * `NewForm` - any valid form
 * `continue` - dig into the sub-expressions of the form
 * `{done, NewForm}` - Replace `Form` with `NewForm`; return all following
 forms unchanged
-* `{error, Reason}` - Abort transformation with an error message.Example - This transform fun would convert all instances of `P ! Msg` to
+* `{error, Reason}` - Abort transformation with an error message.
+
+Example - This transform fun would convert all instances of `P ! Msg` to
 `gproc:send(P, Msg)`:
 <pre>
   parse_transform(Forms, _Options) ->
@@ -422,12 +362,8 @@ forms unchanged
 ###pp_beam/1##
 
 
-
-
 <pre>pp_beam(Beam::<a href="file.md#type-filename">file:filename()</a>) -> string() | {error, Reason}</pre>
 <br></br>
-
-
 
 
 
@@ -437,12 +373,8 @@ the pretty-printed corresponding erlang source code.<a name="pp_beam-2"></a>
 ###pp_beam/2##
 
 
-
-
 <pre>pp_beam(Beam::<a href="#type-filename">filename()</a>, Out::<a href="#type-filename">filename()</a>) -> ok | {error, Reason}</pre>
 <br></br>
-
-
 
 
 
@@ -452,20 +384,14 @@ Erlang source code, storing it in the file Out.<a name="pp_src-2"></a>
 ###pp_src/2##
 
 
-
-
 <pre>pp_src(Res::Forms, Out::<a href="#type-filename">filename()</a>) -> ok</pre>
 <br></br>
-
-
 
 
 Pretty-prints the erlang source code corresponding to Forms into Out
 <a name="replace_function-4"></a>
 
 ###replace_function/4##
-
-
 
 
 `replace_function(F, Arity, NewForm, Forms) -> any()`
@@ -475,12 +401,8 @@ Pretty-prints the erlang source code corresponding to Forms into Out
 ###return/2##
 
 
-
-
 <pre>return(Forms, Context) -&gt; Forms | {error, Es, Ws} | {warnings, Forms, Ws}</pre>
 <br></br>
-
-
 
 
 Checks the transformed result for errors and warnings
@@ -490,7 +412,9 @@ Errors and warnings can be produced from inside a parse transform, with
 a bit of care. The easiest way is to simply produce an `{error, Err}` or
 `{warning, Warn}` form in place. This function finds such forms, and
 removes them from the form list (otherwise, the linter will crash), and
-produces a return value that the compiler can work with.The format of the `error` and `warning` "forms" must be
+produces a return value that the compiler can work with.
+
+The format of the `error` and `warning` "forms" must be
 `{Tag, {Pos, Module, Info}}`, where:
 
 * `Tag :: error | warning`
@@ -511,12 +435,8 @@ using the function [`format_exception/2`](#format_exception-2).<a name="revert-1
 ###revert/1##
 
 
-
-
 <pre>revert(Tree) -&gt; Forms</pre>
 <br></br>
-
-
 
 
 Reverts back from Syntax Tools format to Erlang forms.
@@ -529,12 +449,8 @@ regular Erlang forms.<a name="revert_form-1"></a>
 ###revert_form/1##
 
 
-
-
 <pre>revert_form(F::Tree) -&gt; Form</pre>
 <br></br>
-
-
 
 
 Reverts a single form back from Syntax Tools format to Erlang forms.
@@ -552,8 +468,6 @@ form.<a name="top-3"></a>
 ###top/3##
 
 
-
-
 <pre>top(F::function(), Forms::<a href="#type-forms">forms()</a>, Options::list()) -> <a href="#type-forms">forms()</a> | {error, term()}</pre>
 <br></br>
 
@@ -563,12 +477,8 @@ form.<a name="top-3"></a>
 ###transform/4##
 
 
-
-
 <pre>transform(Fun, Acc, Forms, Options) -&gt; {TransformedForms, NewAcc}</pre>
 <ul class="definitions"><li><pre>Fun = function()</pre></li><li><pre>Options = [{Key, Value}]</pre></li></ul>
-
-
 
 
 Makes one pass

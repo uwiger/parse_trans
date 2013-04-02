@@ -9,8 +9,6 @@
 
 Parse transform for generating record access functions.
 
-
-
 __Authors:__ : Ulf Wiger ([`ulf.wiger@ericsson.com`](mailto:ulf.wiger@ericsson.com)).<a name="description"></a>
 
 ##Description##
@@ -36,7 +34,9 @@ records without the need for compile-time dependencies.
 Whenever record definitions need to be exported from a module,
 inserting a compiler attribute,
 `export_records([RecName|...])` causes this transform
-to lay out access functions for the exported records:As an example, consider the following module:
+to lay out access functions for the exported records:
+
+As an example, consider the following module:
 <pre>
   -module(test_exprecs).
   -export([f/0]).
@@ -49,8 +49,12 @@ to lay out access functions for the exported records:As an example, consider the
   f() ->
       {new,'#new-r'([])}.</pre>
 
+
+
 Compiling this (assuming exprecs is in the path) will produce the
-following code.<pre>
+following code.
+
+<pre>
   -module(test_exprecs).
   -compile({pt_pp_src,true}).
   -export([f/0]).
@@ -329,11 +333,17 @@ following code.<pre>
   f() ->
       {new,'#new-r'([])}.</pre>
 
+
+
 It is possible to modify the naming rules of exprecs, through the use
-of the following attributes (example reflecting the current rules):<pre>
+of the following attributes (example reflecting the current rules):
+
+<pre>
   -exprecs_prefix(["#", operation, "-"]).
   -exprecs_fname([prefix, record]).
-  -exprecs_vfname([fname, "__", version]).</pre>The lists must contain strings or any of the following control atoms:
+  -exprecs_vfname([fname, "__", version]).</pre>
+
+The lists must contain strings or any of the following control atoms:
 
 * in `exprecs_prefix`: `operation`
 
@@ -343,9 +353,13 @@ of the following attributes (example reflecting the current rules):<pre>
 
 
 
+
+
 Exprecs will substitute the control atoms with the string values of the
 corresponding items. The result will then be flattened and converted to an
-atom (a valid function or type name).`operation` is one of:
+atom (a valid function or type name).
+
+`operation` is one of:
 
 
 
@@ -492,8 +506,6 @@ atom (a valid function or type name).`operation` is one of:
 <a name="parse_transform-2"></a>
 
 ###parse_transform/2##
-
-
 
 
 <pre>parse_transform(Forms::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>) -> <a href="#type-forms">forms()</a></pre>
