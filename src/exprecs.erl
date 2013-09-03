@@ -1221,7 +1221,7 @@ f_convert(_Vsns, L, Acc) ->
 f_lens_(#pass1{exports = Es} = Acc, L) ->
     Fname = fname(lens, Acc),
     [
-     funspec(L, Fname, [ {[t_prop(L, Rname, Acc), t_atom(L, Rname)],
+     funspec(L, Fname, [ {[t_attr(L, Rname, Acc), t_atom(L, Rname)],
      			  t_tuple(L, [t_fun(L, [t_record(L, Rname)], t_any(L)),
      				      t_fun(L, [t_any(L),
      						t_record(L, Rname)],
@@ -1235,7 +1235,7 @@ f_lens_(#pass1{exports = Es} = Acc, L) ->
 
 f_lens_1(Rname, Flds, L, Acc) ->
     Fname = fname(lens, Rname, Acc),
-    [funspec(L, Fname, [ {[t_prop(L, Rname, Acc)],
+    [funspec(L, Fname, [ {[t_attr(L, Rname, Acc)],
      			  t_tuple(L, [t_fun(L, [t_record(L, Rname)], t_any(L)),
      				      t_fun(L, [t_any(L),
      						t_record(L, Rname)],
