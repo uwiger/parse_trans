@@ -1,16 +1,18 @@
+REBAR=$(shell which rebar || echo ./rebar)
+
 .PHONY: rel all clean
 
 all: compile
 
 compile:
-	./rebar compile
+	$(REBAR) compile
 
 clean:
-	./rebar clean
+	$(REBAR) clean
 
-test: 
-	./rebar eunit
+test:
+	$(REBAR) eunit
 
 doc:
-	./rebar doc
+	$(REBAR) doc
 
