@@ -298,7 +298,9 @@
 %%      end,
 %%      fun(X, R) -&gt;
 %%             '#set-r'([{c,X}], R)
-%%      end}.
+%%      end};
+%% '#lens-r'(Attr) -&gt;
+%%     error(bad_record_op, ['#lens-r',Attr]).
 %%
 %% -spec '#new-s'() -&gt; #s{}.
 %% '#new-s'() -&gt;
@@ -371,7 +373,9 @@
 %%      end,
 %%      fun(X, R) -&gt;
 %%             '#set-s'([{a,X}], R)
-%%      end}.
+%%      end};
+%% '#lens-s'(Attr) -&gt;
+%%     error(bad_record_op, ['#lens-s', Attr]).
 %%
 %% f() -&gt;
 %%     {new,'#new-r'([])}.
@@ -649,7 +653,13 @@ generate_specs(L, Specs, Acc) ->
        {fname(attr, R, Acc),
 	{type, L, union,
 	 [{atom, L, A} || {A,_} <- Attrs]}, []}}
-     ] || {R, Attrs} <- Specs].
+     ] || {R, Attrs} <- Specs, Attrs =/= []] ++
+	[[{attribute, L, type,
+	   {fname(prop, R, Acc),
+	    {type, L, any, []}, []}},
+	  {attribute, L, type,
+	   {fname(attr, R, Acc),
+	    {type, L, any, []}, []}}] || {R, []} <- Specs].
 
 
 generate_accessors(L, Acc) ->
@@ -792,7 +802,20 @@ funspec(L, Fname, [{H,_} | _] = Alts) ->
     {attribute, L, spec,
      {{Fname, Arity},
       [{type, L, 'fun', [{type, L, product, Head}, Ret]} ||
-	  {Head, Ret} <- Alts]}}.
+	  {Head, Ret} <- Alts,
+	  no_empty_union(Head)]}}.
+
+no_empty_union({type,_,union,[]}) ->
+    false;
+no_empty_union(T) when is_tuple(T) ->
+    no_empty_union(tuple_to_list(T));
+no_empty_union([H|T]) ->
+    no_empty_union(H) andalso no_empty_union(T);
+no_empty_union(_) ->
+    true.
+
+
+
 
 funspec(L, Fname, Head, Returns) ->
     Arity = length(Head),
@@ -850,6 +873,12 @@ f_set_2(Rname, Flds, L, Acc) ->
 	 {call, L, {var, L, 'F'}, [{var, L, 'Vals'},
 				   {var, L, 'Rec'},
 				   {var, L, 'F'}]}]}]}].
+
+bad_record_op(L, Fname, Val) ->
+    {call, L, {remote, L, {atom,L,erlang}, {atom,L,error}},
+     [{atom,L,bad_record_op}, {cons, L, {atom, L, Fname},
+			       {cons, L, {var, L, Val},
+				{nil, L}}}]}.
 
 bad_record_op(L, Fname, Val, R) ->
     {call, L, {remote, L, {atom,L,erlang}, {atom,L,error}},
@@ -1256,7 +1285,9 @@ f_lens_1(Rname, Flds, L, Acc) ->
 						 {var, L, 'X'}]}, {nil,L}},
 			    {var, L, 'R'}]}]
 			}]}}
-		    ]}]} || Attr <- Flds]
+		    ]}]} || Attr <- Flds] ++
+	  [{clause, L, [{var, L, 'Attr'}], [],
+	   [bad_record_op(L, Fname, 'Attr')]}]
      }].
 
 %%% ========== generic parse_transform stuff ==============

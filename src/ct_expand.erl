@@ -52,6 +52,9 @@
 -module(ct_expand).
 -export([parse_transform/2]).
 
+-export([extract_fun/3,
+	 lfun_rewrite/2]).
+
 -type form()    :: any().
 -type forms()   :: [form()].
 -type options() :: [{atom(), any()}].

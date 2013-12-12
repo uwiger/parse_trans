@@ -9,8 +9,9 @@
 
 -record(r, {a = 0 :: integer(), b = 0 :: integer(), c = 0 :: integer()}).
 -record(s, {a}).
+-record(t, {}).
 
--export_records([r, s]).
+-export_records([r, s, t]).
 
 
 f() ->
