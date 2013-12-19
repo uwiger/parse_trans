@@ -555,7 +555,8 @@ get_orig_syntax_tree(File) ->
 -spec revert(forms()) ->
     forms().
 revert(Tree) when is_list(Tree) ->
-    [revert_form(T) || T <- lists:flatten(Tree)].
+    WorkAround = needs_revert_workaround(),
+    [revert_form(T, WorkAround) || T <- lists:flatten(Tree)].
 
 %%% @spec (Tree) -> Form
 %%%
@@ -567,12 +568,55 @@ revert(Tree) when is_list(Tree) ->
 %%% syntax tree, so this function is safe to call even on a regular Erlang
 %%% form.</p>
 revert_form(F) ->
+    revert_form(F, needs_revert_workaround()).
+
+revert_form(F, W) ->
     case erl_syntax:revert(F) of
 	{attribute,L,A,Tree} when element(1,Tree) == tree ->
 	    {attribute,L,A,erl_syntax:revert(Tree)};
 	Result ->
-	    Result
+	    if W -> fix_impl_fun(Result);
+	       true -> Result
+	    end
     end.
+
+fix_impl_fun({'fun',L,{function,{atom,_,Fn},{integer,_,Ay}}}) ->
+    {'fun',L,{function,Fn,Ay}};
+fix_impl_fun({'fun',L,{function,{atom,_,M},{atom,_,Fn},{integer,_,Ay}}}) ->
+    {'fun',L,{function,M,Fn,Ay}};
+fix_impl_fun(T) when is_tuple(T) ->
+    list_to_tuple([fix_impl_fun(F) || F <- tuple_to_list(T)]);
+fix_impl_fun([H|T]) ->
+    [fix_impl_fun(H) | fix_impl_fun(T)];
+fix_impl_fun(X) ->
+    X.
+
+needs_revert_workaround() ->
+    case application:get_env(parse_trans,revert_workaround) of
+	{ok, Bool} when is_boolean(Bool) -> Bool;
+	_ ->
+	    Res = try lint_reverted()
+		  catch
+		      error:_ ->
+			  true
+		  end,
+	    application:set_env(parse_trans,revert_workaround,Res),
+	    Res
+    end.
+
+lint_reverted() ->
+    Ts = [{attribute,1,module,m},
+	  {attribute,2,export,[{f,0}]},
+	  erl_syntax:function(erl_syntax:atom(f),
+			      [erl_syntax:clause(
+				 [],
+				 [erl_syntax:implicit_fun(
+				    erl_syntax:atom(f),
+				    erl_syntax:integer(0))])])],
+    Rev = erl_syntax:revert_forms(Ts),
+    erl_lint:module(Rev),
+    false.
+
 
 %%% @spec (Forms, Context) -> Forms | {error,Es,Ws} | {warnings,Forms,Ws}
 %%%
