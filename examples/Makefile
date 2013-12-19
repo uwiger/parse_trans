@@ -14,12 +14,12 @@ test_exprecs.beam: ../ebin/exprecs.beam test_exprecs.erl
 	@echo Compiling test_exprecs.erl
 	@erlc +debug_info -pa ../ebin -pa . -I ../include test_exprecs.erl
 
+test.beam: test_pt.beam
+ex_pmod.beam: pmod.beam
+
 %.beam: %.erl $(HEADERS)
 	@echo Compiling $<
 	@erlc +debug_info -pa ../ebin -pa . -I ../include $<
-
-test.beam: test_pt.beam
-
 
 clean:
 	@echo Cleaning

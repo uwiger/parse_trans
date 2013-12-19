@@ -1,11 +1,14 @@
 REBAR=$(shell which rebar || echo ./rebar)
 
-.PHONY: rel all clean
+.PHONY: rel all deps clean
 
-all: compile
+all: deps compile
 
 compile:
 	$(REBAR) compile
+
+deps:
+	./rebar get-deps
 
 clean:
 	$(REBAR) clean
