@@ -119,9 +119,7 @@ following code.<pre>
       '#pos-r'(Attr);
   '#pos-'(s, Attr) ->
       '#pos-s'(Attr).
-  -spec '#is_record-'(#r{}) -> true;
-                     (#s{}) -> true;
-                     (any()) -> false.
+  -spec '#is_record-'(any()) -> boolean().
   '#is_record-'(X) ->
       if
           is_record(X, r) ->
@@ -131,9 +129,7 @@ following code.<pre>
           true ->
               false
       end.
-  -spec '#is_record-'(r, #r{}) -> true;
-                     (s, #s{}) -> true;
-                     (any(), any()) -> false.
+  -spec '#is_record-'(any(), any()) -> boolean().
   '#is_record-'(s, Rec) when tuple_size(Rec) == 2, element(1, Rec) == s ->
       true;
   '#is_record-'(r, Rec) when tuple_size(Rec) == 4, element(1, Rec) == r ->

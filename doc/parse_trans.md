@@ -524,7 +524,15 @@ Reverts back from Syntax Tools format to Erlang forms.
 
 Note that the Erlang forms are a subset of the Syntax Tools
 syntax tree, so this function is safe to call even on a list of
-regular Erlang forms.<a name="revert_form-1"></a>
+regular Erlang forms.
+
+
+Note2: R16B03 introduced a bug, where forms produced by
+`erl_syntax:revert/1` (specifically, implicit funs) could crash the linter.
+This function works around that limitation, after first verifying that it's
+necessary to do so. Use of the workaround can be forced with the help of
+the `parse_trans` environment variable {revert_workaround, true}. This
+variable will be removed when R16B03 is no longer 'supported'.<a name="revert_form-1"></a>
 
 ###revert_form/1##
 
@@ -547,7 +555,15 @@ cases.
 
 Note that the Erlang forms are a subset of the Syntax Tools
 syntax tree, so this function is safe to call even on a regular Erlang
-form.<a name="top-3"></a>
+form.
+
+
+Note2: R16B03 introduced a bug, where forms produced by
+`erl_syntax:revert/1` (specifically, implicit funs) could crash the linter.
+This function works around that limitation, after first verifying that it's
+necessary to do so. Use of the workaround can be forced with the help of
+the `parse_trans` environment variable {revert_workaround, true}. This
+variable will be removed when R16B03 is no longer 'supported'.<a name="top-3"></a>
 
 ###top/3##
 
