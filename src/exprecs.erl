@@ -1186,7 +1186,7 @@ f_info_1(Rname, Acc, L) ->
     Flds = get_flds(Rname, Acc),
     [funspec(L, Fname, [{[t_atom(L, fields)],
 			 t_list(L, [t_union(L, [t_atom(L,F) || F <- Flds])])},
-			{[t_atom(L, size)], t_integer(L, length(Flds))}]),
+			{[t_atom(L, size)], t_integer(L, length(Flds)+1)}]),
      {function, L, Fname, 1,
       [{clause, L, [{atom, L, fields}], [],
 	[{call, L, {atom, L, record_info},
