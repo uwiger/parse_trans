@@ -979,7 +979,7 @@ f_get_2(R, Flds, L, Acc) ->
 	     [{[t_atom(L, A), t_record(L, R)], T}
 		 || {A, T} <- Types]
 	     ++ [{[t_list(L, [t_attr(L, R, Acc)]), t_record(L, R)],
-		  t_list(L, [t_union(L, [Ts || {_, Ts} <- Types])])}]
+		  t_list(L, [t_any(L)])}]
 	    ),
     {function, L, FName, 2,
      [{clause, L, [{var, L, 'Attrs'}, {var, L, 'R'}],
