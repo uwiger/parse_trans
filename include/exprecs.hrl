@@ -10,16 +10,16 @@
 %%
 %% The Original Code is exprecs-0.2.
 %%
-%% Copyright (c) 2010 Erlang Solutions Ltd.
+%% Copyright (c) 2014 Ericsson AB
 %%
 %% Contributor(s): ______________________________________.
 
 %%-------------------------------------------------------------------
 %% File    : exprecs.hrl
-%% @author  : Ulf Wiger <ulf.wiger@erlang-solutions.com>
+%% @author  : Ulf Wiger <ulf@wiger.net>
 %% @end
-%% Description : 
+%% Description :
 %%
-%% Created : 25 Feb 2010 by Ulf Wiger <ulf.wiger@erlang-solutions.com>
+%% Created : 25 Feb 2010 by Ulf Wiger <ulf@wiger.net>
 %%-------------------------------------------------------------------
 -compile({parse_transform, exprecs}).

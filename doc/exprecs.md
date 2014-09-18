@@ -1,6 +1,6 @@
 
 
-#Module exprecs#
+# Module exprecs #
 * [Description](#description)
 * [Data Types](#types)
 * [Function Index](#index)
@@ -8,13 +8,10 @@
 
 
 Parse transform for generating record access functions.
+__Authors:__ : Ulf Wiger ([`ulf@wiger.net`](mailto:ulf@wiger.net)).
+<a name="description"></a>
 
-
-
-__Authors:__ : Ulf Wiger ([`ulf.wiger@ericsson.com`](mailto:ulf.wiger@ericsson.com)).<a name="description"></a>
-
-##Description##
-
+## Description ##
 
 This parse transform can be used to reduce compile-time
 dependencies in large systems.
@@ -36,8 +33,13 @@ records without the need for compile-time dependencies.
 Whenever record definitions need to be exported from a module,
 inserting a compiler attribute,
 `export_records([RecName|...])` causes this transform
-to lay out access functions for the exported records:As an example, consider the following module:
-<pre>
+to lay out access functions for the exported records:
+
+
+As an example, consider the following module:
+
+```
+
   -module(test_exprecs).
   -export([f/0]).
   -compile({parse_transform, exprecs}).
@@ -47,10 +49,18 @@ to lay out access functions for the exported records:As an example, consider the
   -record(s,{a}).
   -export_records([r,s]).
   f() ->
-      {new,'#new-r'([])}.</pre>
+      {new,'#new-r'([])}.
+```
+
+
 
 Compiling this (assuming exprecs is in the path) will produce the
-following code.<pre>
+following code.
+
+
+
+```
+
   -module(test_exprecs).
   -compile({pt_pp_src,true}).
   -export([f/0]).
@@ -327,13 +337,25 @@ following code.<pre>
   '#lens-s'(Attr) ->
       error(bad_record_op, ['#lens-s', Attr]).
   f() ->
-      {new,'#new-r'([])}.</pre>
+      {new,'#new-r'([])}.
+```
+
+
 
 It is possible to modify the naming rules of exprecs, through the use
-of the following attributes (example reflecting the current rules):<pre>
+of the following attributes (example reflecting the current rules):
+
+
+
+```
+
   -exprecs_prefix(["#", operation, "-"]).
   -exprecs_fname([prefix, record]).
-  -exprecs_vfname([fname, "__", version]).</pre>The lists must contain strings or any of the following control atoms:
+  -exprecs_vfname([fname, "__", version]).
+```
+
+
+The lists must contain strings or any of the following control atoms:
 
 * in `exprecs_prefix`: `operation`
 
@@ -343,9 +365,13 @@ of the following attributes (example reflecting the current rules):<pre>
 
 
 
+
 Exprecs will substitute the control atoms with the string values of the
 corresponding items. The result will then be flattened and converted to an
-atom (a valid function or type name).`operation` is one of:
+atom (a valid function or type name).
+
+
+`operation` is one of:
 
 
 
@@ -451,35 +477,47 @@ atom (a valid function or type name).`operation` is one of:
 
 <a name="types"></a>
 
-##Data Types##
+## Data Types ##
 
 
 
 
-###<a name="type-form">form()</a>##
+### <a name="type-form">form()</a> ###
 
 
 
-<pre>form() = any()</pre>
+<pre><code>
+form() = any()
+</code></pre>
 
 
 
-###<a name="type-forms">forms()</a>##
+
+
+### <a name="type-forms">forms()</a> ###
 
 
 
-<pre>forms() = [<a href="#type-form">form()</a>]</pre>
+<pre><code>
+forms() = [<a href="#type-form">form()</a>]
+</code></pre>
 
 
 
-###<a name="type-options">options()</a>##
+
+
+### <a name="type-options">options()</a> ###
 
 
 
-<pre>options() = [{atom(), any()}]</pre>
+<pre><code>
+options() = [{atom(), any()}]
+</code></pre>
+
+
 <a name="index"></a>
 
-##Function Index##
+## Function Index ##
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#parse_transform-2">parse_transform/2</a></td><td></td></tr></table>
@@ -487,16 +525,16 @@ atom (a valid function or type name).`operation` is one of:
 
 <a name="functions"></a>
 
-##Function Details##
+## Function Details ##
 
 <a name="parse_transform-2"></a>
 
-###parse_transform/2##
+### parse_transform/2 ###
 
 
-
-
-<pre>parse_transform(Forms::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>) -> <a href="#type-forms">forms()</a></pre>
-<br></br>
+<pre><code>
+parse_transform(Forms::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>) -&gt; <a href="#type-forms">forms()</a>
+</code></pre>
+<br />
 
 

@@ -1,5 +1,5 @@
 %%============================================================================
-%% Copyright 2011 Erlang Solutions Ltd.
+%% Copyright 2014 Ulf Wiger
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 %% limitations under the License.
 %%============================================================================
 %%
-%% Based on meck_mod.erl from http://github.com/esl/meck.git
+%% Based on meck_mod.erl from http://github.com/eproxus/meck.git
 %% Original author: Adam Lindberg
 %%
 -module(parse_trans_mod).

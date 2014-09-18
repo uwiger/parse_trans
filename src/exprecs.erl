@@ -10,7 +10,7 @@
 %%
 %% The Original Code is exprecs-0.2.
 %%
-%% Copyright (c) 2010 Erlang Solutions Ltd.
+%% Copyright (c) 2014 Ericsson AB
 %% The Initial Developer of the Original Code is Ericsson AB.
 %% Portions created by Ericsson are Copyright (C), 2006, Ericsson AB.
 %% All Rights Reserved.
@@ -19,12 +19,12 @@
 
 %%-------------------------------------------------------------------
 %% File    : exprecs.erl
-%% @author  : Ulf Wiger <ulf.wiger@ericsson.com>
+%% @author  : Ulf Wiger <ulf@wiger.net>
 %% @end
 %% Description :
 %%
-%% Created : 13 Feb 2006 by Ulf Wiger <ulf.wiger@ericsson.com>
-%% Rewritten: Jan-Feb 2010 by Ulf Wiger <ulf.wiger@elang-solutions.com>
+%% Created : 13 Feb 2006 by Ulf Wiger <ulf@wiger.net>
+%% Rewritten: Jan-Feb 2010 by Ulf Wiger <ulf@wiger.net>
 %%-------------------------------------------------------------------
 
 %% @doc Parse transform for generating record access functions.
