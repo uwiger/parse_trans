@@ -124,7 +124,7 @@ Performs a transform of <code>Forms</code> using the fun <code>Fun(Form)</code>.
 Reads debug_info from the beam file Beam and returns a string containing
 the pretty-printed corresponding erlang source code.</td></tr><tr><td valign="top"><a href="#pp_beam-2">pp_beam/2</a></td><td>
 Reads debug_info from the beam file Beam and pretty-prints it as
-Erlang source code, storing it in the file Out.</td></tr><tr><td valign="top"><a href="#pp_src-2">pp_src/2</a></td><td>Pretty-prints the erlang source code corresponding to Forms into Out.</td></tr><tr><td valign="top"><a href="#replace_function-4">replace_function/4</a></td><td></td></tr><tr><td valign="top"><a href="#return-2">return/2</a></td><td>Checks the transformed result for errors and warnings.</td></tr><tr><td valign="top"><a href="#revert-1">revert/1</a></td><td>Reverts back from Syntax Tools format to Erlang forms.</td></tr><tr><td valign="top"><a href="#revert_form-1">revert_form/1</a></td><td>Reverts a single form back from Syntax Tools format to Erlang forms.</td></tr><tr><td valign="top"><a href="#top-3">top/3</a></td><td></td></tr><tr><td valign="top"><a href="#transform-4">transform/4</a></td><td>
+Erlang source code, storing it in the file Out.</td></tr><tr><td valign="top"><a href="#pp_src-2">pp_src/2</a></td><td>Pretty-prints the erlang source code corresponding to Forms into Out.</td></tr><tr><td valign="top"><a href="#replace_function-4">replace_function/4</a></td><td></td></tr><tr><td valign="top"><a href="#replace_function-5">replace_function/5</a></td><td></td></tr><tr><td valign="top"><a href="#return-2">return/2</a></td><td>Checks the transformed result for errors and warnings.</td></tr><tr><td valign="top"><a href="#revert-1">revert/1</a></td><td>Reverts back from Syntax Tools format to Erlang forms.</td></tr><tr><td valign="top"><a href="#revert_form-1">revert_form/1</a></td><td>Reverts a single form back from Syntax Tools format to Erlang forms.</td></tr><tr><td valign="top"><a href="#top-3">top/3</a></td><td></td></tr><tr><td valign="top"><a href="#transform-4">transform/4</a></td><td>
 Makes one pass.</td></tr></table>
 
 
@@ -484,6 +484,13 @@ Pretty-prints the erlang source code corresponding to Forms into Out
 ### replace_function/4 ###
 
 `replace_function(F, Arity, NewForm, Forms) -> any()`
+
+
+<a name="replace_function-5"></a>
+
+### replace_function/5 ###
+
+`replace_function(F, Arity, NewForm, Forms, Opts) -> any()`
 
 
 <a name="return-2"></a>

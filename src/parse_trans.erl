@@ -60,6 +60,7 @@
 
 -export([do_insert_forms/4,
 	 replace_function/4,
+	 replace_function/5,
 	 export_function/3]).
 
 -export([
@@ -351,19 +352,39 @@ top(F, Forms, Options) ->
     end.
 
 replace_function(F, Arity, NewForm, Forms) ->
+    replace_function(F, Arity, NewForm, Forms, []).
+
+replace_function(F, Arity, NewForm, Forms, Opts) ->
     {NewForms, _} =
 	do_transform(
 	  fun(function, Form, _Ctxt, Acc) ->
 		  case erl_syntax:revert(Form) of
-		      {function, _, F, Arity, _} ->
-			  {NewForm, false, Acc};
+		      {function, _, F, Arity, _} = RevForm ->
+			  {[], NewForm, with_original_f(RevForm, Opts),
+			   false, Acc};
 		      _ ->
 			  {Form, false, Acc}
 		  end;
 	     (_, Form, _Ctxt, Acc) ->
 		  {Form, false, Acc}
 	  end, false, Forms, initial_context(Forms, [])),
-    revert(NewForms).
+    revert(maybe_export_renamed(NewForms, Arity, Opts)).
+
+with_original_f({function,_,_,_,_} = Form, Opts) ->
+    case lists:keyfind(rename_original, 1, Opts) of
+	{_, NewName} when is_atom(NewName) ->
+	    [setelement(3, Form, NewName)];
+	_ ->
+	    []
+    end.
+
+maybe_export_renamed(Forms, Arity, Opts) ->
+    case lists:keyfind(rename_original, 1, Opts) of
+	{_, NewName} when is_atom(NewName) ->
+	    export_function(NewName, Arity, Forms);
+	_ ->
+	    Forms
+    end.
 
 export_function(F, Arity, Forms) ->
     do_insert_forms(above, [{attribute, 1, export, [{F, Arity}]}], Forms,
