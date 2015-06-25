@@ -6,9 +6,10 @@
 * [Function Index](#index)
 * [Function Details](#functions)
 
-
 Parse transform for generating record access functions.
+
 __Authors:__ : Ulf Wiger ([`ulf@wiger.net`](mailto:ulf@wiger.net)).
+
 <a name="description"></a>
 
 ## Description ##
@@ -16,25 +17,21 @@ __Authors:__ : Ulf Wiger ([`ulf@wiger.net`](mailto:ulf@wiger.net)).
 This parse transform can be used to reduce compile-time
 dependencies in large systems.
 
-
 In the old days, before records, Erlang programmers often wrote
 access functions for tuple data. This was tedious and error-prone.
 The record syntax made this easier, but since records were implemented
 fully in the pre-processor, a nasty compile-time dependency was
 introduced.
 
-
 This module automates the generation of access functions for
 records. While this method cannot fully replace the utility of
 pattern matching, it does allow a fair bit of functionality on
 records without the need for compile-time dependencies.
 
-
 Whenever record definitions need to be exported from a module,
 inserting a compiler attribute,
 `export_records([RecName|...])` causes this transform
 to lay out access functions for the exported records:
-
 
 As an example, consider the following module:
 
@@ -52,12 +49,8 @@ As an example, consider the following module:
       {new,'#new-r'([])}.
 ```
 
-
-
 Compiling this (assuming exprecs is in the path) will produce the
 following code.
-
-
 
 ```
 
@@ -340,12 +333,8 @@ following code.
       {new,'#new-r'([])}.
 ```
 
-
-
 It is possible to modify the naming rules of exprecs, through the use
 of the following attributes (example reflecting the current rules):
-
-
 
 ```
 
@@ -353,7 +342,6 @@ of the following attributes (example reflecting the current rules):
   -exprecs_fname([prefix, record]).
   -exprecs_vfname([fname, "__", version]).
 ```
-
 
 The lists must contain strings or any of the following control atoms:
 
@@ -364,12 +352,9 @@ The lists must contain strings or any of the following control atoms:
 * in `exprecs_vfname`: `operation`, `record`, `prefix`, `fname`, `version`
 
 
-
-
 Exprecs will substitute the control atoms with the string values of the
 corresponding items. The result will then be flattened and converted to an
 atom (a valid function or type name).
-
 
 `operation` is one of:
 
@@ -485,7 +470,6 @@ atom (a valid function or type name).
 ### <a name="type-form">form()</a> ###
 
 
-
 <pre><code>
 form() = any()
 </code></pre>
@@ -493,9 +477,7 @@ form() = any()
 
 
 
-
 ### <a name="type-forms">forms()</a> ###
-
 
 
 <pre><code>
@@ -505,15 +487,12 @@ forms() = [<a href="#type-form">form()</a>]
 
 
 
-
 ### <a name="type-options">options()</a> ###
-
 
 
 <pre><code>
 options() = [{atom(), any()}]
 </code></pre>
-
 
 <a name="index"></a>
 
@@ -531,10 +510,8 @@ options() = [{atom(), any()}]
 
 ### parse_transform/2 ###
 
-
 <pre><code>
 parse_transform(Forms::<a href="#type-forms">forms()</a>, Options::<a href="#type-options">options()</a>) -&gt; <a href="#type-forms">forms()</a>
 </code></pre>
 <br />
-
 
