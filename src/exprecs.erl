@@ -551,8 +551,15 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
 			  {fname(info, RecS, Acc), 1},
 			  {fname(lens, RecS, Acc), 1}]
 		 end, Es)] ++ version_exports(Vsns, Acc),
+    TypeExports =
+	lists:flatmap(
+	  fun(Rec) ->
+		  [{fname(prop, Rec, Acc), 0},
+		   {fname(attr, Rec, Acc), 0}]
+	  end, Es),
     {[], Form,
-     [{attribute,L,export,Exports}],
+     [{attribute,L,export,Exports},
+      {attribute,L,export_type, TypeExports}],
      false, Acc#pass1{inserted = true}};
 generate_f(function, Form, _Context, #pass1{generated = false} = Acc) ->
     % Layout record funs before first function
@@ -999,8 +1006,7 @@ f_info(Acc, L) ->
     Fname = list_to_atom(fname_prefix(info, Acc)),
     [funspec(L, Fname,
 	     [{[t_atom(L, R)],
-	       t_list(L, [t_union(L, [t_atom(L,A) ||
-					 A <- get_flds(R, Acc)])])}
+	       t_list(L, [t_attr(L, R, Acc)])}
 	      || R <- Acc#pass1.exports]),
      {function, L, Fname, 1,
       [{clause, L,
@@ -1048,7 +1054,7 @@ f_info_2(Acc, L) ->
 		       TRec = t_atom(L, Rname),
 		       [{[TRec, t_atom(L, size)], t_integer(L, length(Flds)+1)},
 			{[TRec, t_atom(L, fields)],
-			 t_list(L, [t_union(L, [t_atom(L, F) || F <- Flds])])}]
+			 t_list(L, [t_attr(L, Rname, Acc)])}]
 	       end, Acc#pass1.exports)),
      {function, L, Fname, 2,
       [{clause, L,
