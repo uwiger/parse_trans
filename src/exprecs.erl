@@ -45,30 +45,8 @@
 %% to lay out access functions for the exported records:</p>
 %%
 %% As an example, consider the following module:
-%% <pre>
+%% <pre lang="erlang">
 %% -module(test_exprecs).
-%% -export([f/0]).
-%%
-%% -compile({parse_transform, exprecs}).
-%%
-%% -record(r, {a = 0 :: integer(),
-%%             b = 0 :: integer(),
-%%             c = 0 :: integer()}).
-%%
-%% -record(s,{a}).
-%%
-%% -export_records([r,s]).
-%%
-%% f() -&gt;
-%%     {new,'#new-r'([])}.
-%% </pre>
-%%
-%% Compiling this (assuming exprecs is in the path) will produce the
-%% following code.
-%%
-%% <pre>
-%% -module(test_exprecs).
-%% -compile({pt_pp_src,true}).
 %% -export([f/0]).
 %% -record(r,{a = 0 :: integer(),b = 0 :: integer(),c = 0 :: integer()}).
 %% -record(s,{a}).
@@ -102,37 +80,32 @@
 %%          '#fromlist-s'/2,
 %%          '#info-s'/1,
 %%          '#lens-s'/1]).
-%%
+%% -export_type(['#prop-r'/0,'#attr-r'/0,'#prop-s'/0,'#attr-s'/0]).
 %% -type '#prop-r'() :: {a, integer()} | {b, integer()} | {c, integer()}.
 %% -type '#attr-r'() :: a | b | c.
 %% -type '#prop-s'() :: {a, any()}.
 %% -type '#attr-s'() :: a.
-%%
 %% -spec '#exported_records-'() -&gt; [r | s].
 %% '#exported_records-'() -&gt;
 %%     [r,s].
-%%
 %% -spec '#new-'(r) -&gt; #r{};
 %%              (s) -&gt; #s{}.
 %% '#new-'(r) -&gt;
 %%     '#new-r'();
 %% '#new-'(s) -&gt;
 %%     '#new-s'().
-%%
-%% -spec '#info-'(r) -&gt; [a | b | c];
-%%               (s) -&gt; [a].
+%% -spec '#info-'(r) -&gt; ['#attr-r'()];
+%%               (s) -&gt; ['#attr-s'()].
 %% '#info-'(RecName) -&gt;
 %%     '#info-'(RecName, fields).
-%%
 %% -spec '#info-'(r, size) -&gt; 4;
-%%               (r, fields) -&gt; [a | b | c];
+%%               (r, fields) -&gt; ['#attr-r'()];
 %%               (s, size) -&gt; 2;
-%%               (s, fields) -&gt; [a].
+%%               (s, fields) -&gt; ['#attr-s'()].
 %% '#info-'(r, Info) -&gt;
 %%     '#info-r'(Info);
 %% '#info-'(s, Info) -&gt;
 %%     '#info-s'(Info).
-%%
 %% -spec '#pos-'(r, a) -&gt; 1;
 %%              (r, b) -&gt; 2;
 %%              (r, c) -&gt; 3;
@@ -141,9 +114,7 @@
 %%     '#pos-r'(Attr);
 %% '#pos-'(s, Attr) -&gt;
 %%     '#pos-s'(Attr).
-%%
 %% -spec '#is_record-'(any()) -&gt; boolean().
-%%                    
 %% '#is_record-'(X) -&gt;
 %%     if
 %%         is_record(X, r) -&gt;
@@ -153,62 +124,54 @@
 %%         true -&gt;
 %%             false
 %%     end.
-%%
 %% -spec '#is_record-'(any(), any()) -&gt; boolean().
-%%                    
 %% '#is_record-'(s, Rec) when tuple_size(Rec) == 2, element(1, Rec) == s -&gt;
 %%     true;
 %% '#is_record-'(r, Rec) when tuple_size(Rec) == 4, element(1, Rec) == r -&gt;
 %%     true;
 %% '#is_record-'(_, _) -&gt;
 %%     false.
-%%
 %% -spec '#get-'(a, #r{}) -&gt; integer();
 %%              (b, #r{}) -&gt; integer();
 %%              (c, #r{}) -&gt; integer();
 %%              (a, #s{}) -&gt; any();
-%%              (['#attr-r'()], #r{}) -&gt; [integer()];
+%%              (['#attr-r'()], #r{}) -&gt;
+%%                  [integer() | integer() | integer()];
 %%              (['#attr-s'()], #s{}) -&gt; [any()].
 %% '#get-'(Attrs, Rec) when is_record(Rec, r) -&gt;
 %%     '#get-r'(Attrs, Rec);
 %% '#get-'(Attrs, Rec) when is_record(Rec, s) -&gt;
 %%     '#get-s'(Attrs, Rec).
-%%
 %% -spec '#set-'(['#prop-r'()], #r{}) -&gt; #r{};
 %%              (['#prop-s'()], #s{}) -&gt; #s{}.
 %% '#set-'(Vals, Rec) when is_record(Rec, r) -&gt;
 %%     '#set-r'(Vals, Rec);
 %% '#set-'(Vals, Rec) when is_record(Rec, s) -&gt;
 %%     '#set-s'(Vals, Rec).
-%%
 %% -spec '#fromlist-'(['#prop-r'()], #r{}) -&gt; #r{};
 %%                   (['#prop-s'()], #s{}) -&gt; #s{}.
 %% '#fromlist-'(Vals, Rec) when is_record(Rec, r) -&gt;
 %%     '#fromlist-r'(Vals, Rec);
 %% '#fromlist-'(Vals, Rec) when is_record(Rec, s) -&gt;
 %%     '#fromlist-s'(Vals, Rec).
-%%
-%% -spec '#lens-'('#prop-r'(), r) -&gt;
-%%                  {fun((#r{}) -&gt; any()), fun((any(), #r{}) -&gt; #r{})};
-%%              ('#prop-s'(), s) -&gt;
-%%                  {fun((#s{}) -&gt; any()), fun((any(), #s{}) -&gt; #s{})}.
+%% -spec '#lens-'('#attr-r'(), r) -&gt;
+%%                   {fun((#r{}) -&gt; any()), fun((any(), #r{}) -&gt; #r{})};
+%%               ('#attr-s'(), s) -&gt;
+%%                   {fun((#s{}) -&gt; any()), fun((any(), #s{}) -&gt; #s{})}.
 %% '#lens-'(Attr, r) -&gt;
 %%     '#lens-r'(Attr);
 %% '#lens-'(Attr, s) -&gt;
 %%     '#lens-s'(Attr).
-%%
 %% -spec '#new-r'() -&gt; #r{}.
 %% '#new-r'() -&gt;
 %%     #r{}.
-%%
 %% -spec '#new-r'(['#prop-r'()]) -&gt; #r{}.
 %% '#new-r'(Vals) -&gt;
 %%     '#set-r'(Vals, #r{}).
-%%
 %% -spec '#get-r'(a, #r{}) -&gt; integer();
 %%               (b, #r{}) -&gt; integer();
 %%               (c, #r{}) -&gt; integer();
-%%               (['#attr-r'()], #r{}) -&gt; [integer()].
+%%               (['#attr-r'()], #r{}) -&gt; [any()].
 %% '#get-r'(Attrs, R) when is_list(Attrs) -&gt;
 %%     [
 %%      '#get-r'(A, R) ||
@@ -222,7 +185,6 @@
 %%     R#r.c;
 %% '#get-r'(Attr, R) -&gt;
 %%     error(bad_record_op, ['#get-r',Attr,R]).
-%%
 %% -spec '#set-r'(['#prop-r'()], #r{}) -&gt; #r{}.
 %% '#set-r'(Vals, Rec) -&gt;
 %%     F = fun([], R, _F1) -&gt;
@@ -237,11 +199,9 @@
 %%                error(bad_record_op, ['#set-r',Vs,R])
 %%         end,
 %%     F(Vals, Rec, F).
-%%
 %% -spec '#fromlist-r'(['#prop-r'()]) -&gt; #r{}.
 %% '#fromlist-r'(Vals) when is_list(Vals) -&gt;
 %%     '#fromlist-r'(Vals, '#new-r'()).
-%%
 %% -spec '#fromlist-r'(['#prop-r'()], #r{}) -&gt; #r{}.
 %% '#fromlist-r'(Vals, Rec) -&gt;
 %%     AttrNames = [{a,2},{b,3},{c,4}],
@@ -256,7 +216,6 @@
 %%                end
 %%         end,
 %%     F(AttrNames, Rec, F).
-%%
 %% -spec '#pos-r'('#attr-r'() | atom()) -&gt; integer().
 %% '#pos-r'(a) -&gt;
 %%     2;
@@ -266,16 +225,14 @@
 %%     4;
 %% '#pos-r'(A) when is_atom(A) -&gt;
 %%     0.
-%%
 %% -spec '#info-r'(fields) -&gt; [a | b | c];
-%%                (size) -&gt; 3.
+%%                (size) -&gt; 4.
 %% '#info-r'(fields) -&gt;
 %%     record_info(fields, r);
 %% '#info-r'(size) -&gt;
 %%     record_info(size, r).
-%%
-%% -spec '#lens-r'('#prop-r'()) -&gt;
-%%                   {fun((#r{}) -&gt; any()), fun((any(), #r{}) -&gt; #r{})}.
+%% -spec '#lens-r'('#attr-r'()) -&gt;
+%%                    {fun((#r{}) -&gt; any()), fun((any(), #r{}) -&gt; #r{})}.
 %% '#lens-r'(a) -&gt;
 %%     {fun(R) -&gt;
 %%             '#get-r'(a, R)
@@ -299,15 +256,12 @@
 %%      end};
 %% '#lens-r'(Attr) -&gt;
 %%     error(bad_record_op, ['#lens-r',Attr]).
-%%
 %% -spec '#new-s'() -&gt; #s{}.
 %% '#new-s'() -&gt;
 %%     #s{}.
-%%
 %% -spec '#new-s'(['#prop-s'()]) -&gt; #s{}.
 %% '#new-s'(Vals) -&gt;
 %%     '#set-s'(Vals, #s{}).
-%%
 %% -spec '#get-s'(a, #s{}) -&gt; any();
 %%               (['#attr-s'()], #s{}) -&gt; [any()].
 %% '#get-s'(Attrs, R) when is_list(Attrs) -&gt;
@@ -319,7 +273,6 @@
 %%     R#s.a;
 %% '#get-s'(Attr, R) -&gt;
 %%     error(bad_record_op, ['#get-s',Attr,R]).
-%%
 %% -spec '#set-s'(['#prop-s'()], #s{}) -&gt; #s{}.
 %% '#set-s'(Vals, Rec) -&gt;
 %%     F = fun([], R, _F1) -&gt;
@@ -330,11 +283,9 @@
 %%                error(bad_record_op, ['#set-s',Vs,R])
 %%         end,
 %%     F(Vals, Rec, F).
-%%
 %% -spec '#fromlist-s'(['#prop-s'()]) -&gt; #s{}.
 %% '#fromlist-s'(Vals) when is_list(Vals) -&gt;
 %%     '#fromlist-s'(Vals, '#new-s'()).
-%%
 %% -spec '#fromlist-s'(['#prop-s'()], #s{}) -&gt; #s{}.
 %% '#fromlist-s'(Vals, Rec) -&gt;
 %%     AttrNames = [{a,2}],
@@ -349,22 +300,19 @@
 %%                end
 %%         end,
 %%     F(AttrNames, Rec, F).
-%%
 %% -spec '#pos-s'('#attr-s'() | atom()) -&gt; integer().
 %% '#pos-s'(a) -&gt;
 %%     2;
 %% '#pos-s'(A) when is_atom(A) -&gt;
 %%     0.
-%%
 %% -spec '#info-s'(fields) -&gt; [a];
-%%                (size) -&gt; 1.
+%%                (size) -&gt; 2.
 %% '#info-s'(fields) -&gt;
 %%     record_info(fields, s);
 %% '#info-s'(size) -&gt;
 %%     record_info(size, s).
-%%
-%% -spec '#lens-s'('#prop-s'()) -&gt;
-%%                   {fun((#s{}) -&gt; any()), fun((any(), #s{}) -&gt; #s{})}.
+%% -spec '#lens-s'('#attr-s'()) -&gt;
+%%                    {fun((#s{}) -&gt; any()), fun((any(), #s{}) -&gt; #s{})}.
 %% '#lens-s'(a) -&gt;
 %%     {fun(R) -&gt;
 %%             '#get-s'(a, R)
@@ -373,11 +321,9 @@
 %%             '#set-s'([{a,X}], R)
 %%      end};
 %% '#lens-s'(Attr) -&gt;
-%%     error(bad_record_op, ['#lens-s', Attr]).
-%%
+%%     error(bad_record_op, ['#lens-s',Attr]).
 %% f() -&gt;
 %%     {new,'#new-r'([])}.
-%%
 %% </pre>
 %%
 %% It is possible to modify the naming rules of exprecs, through the use
