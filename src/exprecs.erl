@@ -432,7 +432,11 @@ add_untyped_recs(#pass1{records = Rs,
 		     not lists:keymember(R, 1, RTypes)],
     RTypes1 = [{R, lists:map(
 		     fun({record_field,L,{atom,_,A}}) -> {A, t_any(L)};
-			({record_field,L,{atom,_,A},_}) -> {A, t_any(L)}
+			({record_field,L,{atom,_,A},_}) -> {A, t_any(L)};
+                        ({typed_record_field,
+                          {record_field,L,{atom,_,A}},_}) -> {A, t_any(L)};
+                        ({typed_record_field,
+                          {record_field,L,{atom,_,A},_},_}) -> {A, t_any(L)}
 		     end, Def)} || {R, Def} <- Untyped],
     Acc#pass1{record_types = RTypes ++ RTypes1}.
 
@@ -645,7 +649,9 @@ get_flds(Rname, #pass1{records = Rs}) ->
     {_, Flds} = lists:keyfind(Rname, 1, Rs),
     lists:map(
       fun({record_field,_, {atom,_,N}}) -> N;
-	 ({record_field,_, {atom,_,N}, _}) -> N
+	 ({record_field,_, {atom,_,N}, _}) -> N;
+         ({typed_record_field,{record_field,_,{atom,_,N}},_}) -> N;
+         ({typed_record_field,{record_field,_,{atom,_,N},_},_}) -> N
       end, Flds).
 
 
