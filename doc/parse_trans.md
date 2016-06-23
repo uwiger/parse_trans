@@ -8,7 +8,7 @@
 
 Generic parse transform library for Erlang.
 
-__Authors:__ : Ulf Wiger ([`ulf.wiger@feuerlabs.com`](mailto:ulf.wiger@feuerlabs.com)).
+__Authors:__ : Ulf Wiger ([`ulf@wiger.net`](mailto:ulf@wiger.net)).
 
 <a name="description"></a>
 

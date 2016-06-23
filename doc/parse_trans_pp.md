@@ -7,7 +7,7 @@
 
 Generic parse transform library for Erlang.
 
-__Authors:__ : Ulf Wiger ([`ulf@feuerlabs.com`](mailto:ulf@feuerlabs.com)).
+__Authors:__ : Ulf Wiger ([`ulf@wiger.net`](mailto:ulf@wiger.net)).
 
 <a name="description"></a>
 
@@ -22,7 +22,7 @@ Using e.g. the following bash alias:
 
 ```
 
-   alias pp='escript $PARSE_TRANS_ROOT/ebin/parse_trans_pp.beam'
+  alias pp='escript $PARSE_TRANS_ROOT/ebin/parse_trans_pp.beam'
 ```
 
 a file could be pretty-printed using the following command:

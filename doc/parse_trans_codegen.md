@@ -7,7 +7,7 @@
 
 Parse transform for code generation pseduo functions.
 
-__Authors:__ : Ulf Wiger ([`ulf@feuerlabs.com`](mailto:ulf@feuerlabs.com)).
+__Authors:__ : Ulf Wiger ([`ulf@wiger.net`](mailto:ulf@wiger.net)).
 
 <a name="description"></a>
 
