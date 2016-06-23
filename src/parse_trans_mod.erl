@@ -41,14 +41,14 @@ transform_module(Mod, PT, Options) ->
     Forms = abstract_code(File),
     Context = parse_trans:initial_context(Forms, Options),
     PTMods = if is_atom(PT) -> [PT];
-		is_function(PT, 2) -> [PT];
-		is_list(PT) -> PT
-	     end,
+                is_function(PT, 2) -> [PT];
+                is_list(PT) -> PT
+             end,
     Transformed = lists:foldl(fun(PTx, Fs) when is_function(PTx, 2) ->
-				      PTx(Fs, Options);
-				 (PTMod, Fs) ->
-				      PTMod:parse_transform(Fs, Options)
-			      end, Forms, PTMods),
+                                      PTx(Fs, Options);
+                                 (PTMod, Fs) ->
+                                      PTMod:parse_transform(Fs, Options)
+                              end, Forms, PTMods),
     parse_trans:optionally_pretty_print(Transformed, Options, Context),
     compile_and_load_forms(Transformed, get_compile_options(Options)).
 
