@@ -483,6 +483,7 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
                {fname(get, Acc), 2},
                {fname(set, Acc), 2},
                {fname(fromlist, Acc), 2},
+               {fname(frommap, Acc), 2},
                {fname(lens, Acc), 2} |
                lists:flatmap(
                  fun(Rec) ->
@@ -493,7 +494,9 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
                           {fname(set, RecS, Acc), 2},
                           {fname(pos, RecS, Acc), 1},
                           {fname(fromlist, RecS, Acc), 1},
+                          {fname(frommap, RecS, Acc), 1},
                           {fname(fromlist, RecS, Acc), 2},
+                          {fname(frommap, RecS, Acc), 2},
                           {fname(info, RecS, Acc), 1},
                           {fname(lens, RecS, Acc), 1}]
                  end, Es)] ++ version_exports(Vsns, Acc),
@@ -625,6 +628,7 @@ generate_accessors(L, Acc) ->
        f_get(Acc, L),
        f_set(Acc, L),
        f_fromlist(Acc, L),
+       f_frommap(Acc, L),
        f_lens_(Acc, L)|
        lists:append(
          lists:map(
@@ -636,6 +640,8 @@ generate_accessors(L, Acc) ->
                     f_set_2(Rname, Fields, L, Acc),
                     f_fromlist_1(Rname, L, Acc),
                     f_fromlist_2(Rname, Fields, L, Acc),
+                    f_frommap_1(Rname, L, Acc),
+                    f_frommap_2(Rname, L, Acc),
                     f_pos_1(Rname, Fields, L, Acc),
                     f_info_1(Rname, Acc, L),
                     f_lens_1(Rname, Fields, L, Acc)]
@@ -791,6 +797,11 @@ t_fun(L, As, Res) -> {type, L, 'fun', [{type, L, product, As}, Res]}.
 t_tuple(L, Es)    -> {type, L, tuple, Es}.
 t_boolean(L)     -> {type, L, boolean, []}.
 t_record(L, A)   -> {type, L, record, [{atom, L, A}]}.
+t_map(L, Rname, Acc) -> {type, L, map,
+                         [{type, L, map_field_assoc, [t_atom(L, F), t_any(L)]}
+                          || F <- get_flds(Rname, Acc)
+                         ]
+                        }.
 
 f_set_2(Rname, Flds, L, Acc) ->
     Fname = fname(set, Rname, Acc),
@@ -860,6 +871,20 @@ f_pos_1(Rname, Flds, L, Acc) ->
             [{integer, L, 0}]}]
      }].
 
+f_frommap_1(Rname, L, Acc) ->
+    Fname = fname(frommap, Rname, Acc),
+    [
+     funspec(L, Fname, [t_map(L, Rname, Acc)],
+             t_record(L, Rname)),
+     {function, L, Fname, 1,
+      [{clause, L, [{var, L, 'Vals'}],
+        [[ {call, L, {atom, L, is_map}, [{var, L, 'Vals'}]} ]],
+        [{call, L, {atom, L, Fname},
+          [{var, L, 'Vals'},
+           {call, L, {atom, L, fname(new, Rname, Acc)}, []}]}
+        ]}
+      ]}].
+
 f_fromlist_1(Rname, L, Acc) ->
     Fname = fname(fromlist, Rname, Acc),
     [
@@ -871,6 +896,25 @@ f_fromlist_1(Rname, L, Acc) ->
         [{call, L, {atom, L, Fname},
           [{var, L, 'Vals'},
            {call, L, {atom, L, fname(new, Rname, Acc)}, []}]}
+        ]}
+      ]}].
+
+f_frommap_2(Rname, L, Acc) ->
+    Fname = fname(frommap, Rname, Acc),
+    TRec = t_record(L, Rname),
+    [
+     funspec(L, Fname, [t_map(L, Rname, Acc), TRec],
+             TRec),
+     {function, L, Fname, 2,
+      [{clause, L, [{var, L, 'Vals'}, {var, L, 'Rec'}], [],
+        [{match, L, {var, L, 'List'},
+          {call, L, {remote, L, {atom, L, maps}, {atom, L, to_list}},
+           [{var, L, 'Vals'}]
+          }
+         },
+         {call, L, {atom, L, fname(fromlist, Rname, Acc)},
+          [{var, L, 'List'}, {var, L, 'Rec'}]
+         }
         ]}
       ]}].
 
@@ -1131,6 +1175,26 @@ f_fromlist(Acc, L) ->
            {atom, L, is_record},
            [{var, L, 'Rec'}, {atom, L, R}]}]],
         [{call, L, {atom, L, fname(fromlist, R, Acc)}, [{var, L, 'Vals'},
+                                                        {var, L, 'Rec'}]}]} ||
+          R <- Acc#pass1.exports]}
+    ].
+
+f_frommap(Acc, L) ->
+    Fname = list_to_atom(fname_prefix(frommap, Acc)),
+    [funspec(L, Fname,
+             lists:map(
+               fun(Rname) ->
+                       TRec = t_record(L, Rname),
+                       {[t_map(L, Rname, Acc), TRec], TRec}
+               end, Acc#pass1.exports)),
+     {function, L, Fname, 2,
+      [{clause, L,
+        [{var, L, 'Vals'},
+         {var, L, 'Rec'}],
+        [[{call, L,
+           {atom, L, is_record},
+           [{var, L, 'Rec'}, {atom, L, R}]}]],
+        [{call, L, {atom, L, fname(frommap, R, Acc)}, [{var, L, 'Vals'},
                                                         {var, L, 'Rec'}]}]} ||
           R <- Acc#pass1.exports]}
     ].
