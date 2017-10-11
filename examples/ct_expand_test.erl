@@ -22,6 +22,9 @@ h() ->
 i() ->
     ct_expand:term(gb_trees:insert(a_fun, my_fun2(), gb_trees:empty())).
 
+fixture() ->
+    ct_expand:term(jsx:consult("my_file.json", [return_maps])).
+
 zip([H1|T1], [H2|T2]) ->
     F = my_fun2(),
     [{F(H1),F(H2)} | zip(T1, T2)];
