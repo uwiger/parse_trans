@@ -117,22 +117,20 @@ extract_fun(Name, Arity, Forms) ->
 
 eval_lfun({function,L,F,_,Clauses}, Args, Bs, Forms, Trace) ->
     try
-        begin
-            {ArgsV, Bs1} = lists:mapfoldl(
-                             fun(A, Bs_) ->
-                                     {value,AV,Bs1_} =
-                                         erl_eval:expr(A, Bs_, lfh(Forms, Trace)),
-                                     {abstract(AV), Bs1_}
-                             end, Bs, Args),
-            Expr = {call, L, {'fun', L, {clauses, lfun_rewrite(Clauses, Forms)}}, ArgsV},
-            call_trace(Trace =/= [], L, F, ArgsV),
-            {value, Ret, _} =
-                erl_eval:expr(Expr, erl_eval:new_bindings(), lfh(Forms, Trace)),
-            ret_trace(lists:member(r, Trace) orelse lists:member(x, Trace),
-                      L, F, Args, Ret),
-            %% restore bindings
-            {value, Ret, Bs1}
-        end
+        {ArgsV, Bs1} = lists:mapfoldl(
+                         fun(A, Bs_) ->
+                                 {value,AV,Bs1_} =
+                                     erl_eval:expr(A, Bs_, lfh(Forms, Trace)),
+                                 {abstract(AV), Bs1_}
+                         end, Bs, Args),
+        Expr = {call, L, {'fun', L, {clauses, lfun_rewrite(Clauses, Forms)}}, ArgsV},
+        call_trace(Trace =/= [], L, F, ArgsV),
+        {value, Ret, _} =
+            erl_eval:expr(Expr, erl_eval:new_bindings(), lfh(Forms, Trace)),
+        ret_trace(lists:member(r, Trace) orelse lists:member(x, Trace),
+                  L, F, Args, Ret),
+        %% restore bindings
+        {value, Ret, Bs1}
     catch
         error:Err ->
             exception_trace(lists:member(x, Trace), L, F, Args, Err),
