@@ -1,6 +1,6 @@
 examples/*.beam
 examples/*.xf*
-ebin
+_build
 *~
 */*~
 .eunit

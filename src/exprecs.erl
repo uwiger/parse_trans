@@ -1046,8 +1046,8 @@ funspec(L, Fname, Head, Returns) ->
         [{type, L, product, Head}, Returns]}]}}.
 
 
-t_prop(L, Rname, Acc) -> {type, L, fname(prop, Rname, Acc), []}.
-t_attr(L, Rname, Acc) -> {type, L, fname(attr, Rname, Acc), []}.
+t_prop(L, Rname, Acc) -> {user_type, L, fname(prop, Rname, Acc), []}.
+t_attr(L, Rname, Acc) -> {user_type, L, fname(attr, Rname, Acc), []}.
 t_union(L, Alt)   -> {type, L, union, lists:usort(Alt)}.
 t_any(L)          -> {type, L, any, []}.
 t_atom(L)         -> {type, L, atom, []}.
@@ -1338,10 +1338,19 @@ f_pos_2(#pass1{exports = Es} = Acc, L) ->
      funspec(L, Fname, lists:flatmap(
                          fun(R) ->
                                  Flds = get_flds(R, Acc),
-                                 PFlds = lists:zip(
-                                           lists:seq(1, length(Flds)), Flds),
-                                 [{[t_atom(L, R), t_atom(L, A)],
-                                   t_integer(L, P)} || {P,A} <- PFlds]
+                                 %% PFlds = lists:zip(
+                                 %%           lists:seq(2, length(Flds)+1), Flds),
+                                 Ps = lists:seq(2, length(Flds)+1),
+                                 [{[t_atom(L, R), t_union(
+                                                    L, ([t_atom(L, F)
+                                                         || F <- Flds]
+                                                        ++ [t_atom(L)]))],
+                                   t_union(L, ([t_integer(L, P) || P <- Ps]
+                                               ++ [t_integer(L, 0)]))}]
+                                 %% [{[t_atom(L, R), t_atom(L, A)],
+                                 %%   t_integer(L, P)} || {P,A} <- PFlds]
+                                 %%     ++ [{[t_atom(L, R), t_any(L)],
+                                 %%          t_integer(L, 0)}]
                          end, Es)),
      {function, L, Fname, 2,
       [{clause, L,
