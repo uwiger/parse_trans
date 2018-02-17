@@ -1,21 +1,18 @@
-REBAR=$(shell which rebar || echo ./rebar)
+REBAR3=$(shell which rebar3 || echo ./rebar3)
 
-.PHONY: rel all deps clean
+.PHONY: rel all clean
 
-all: deps compile
+all: compile
 
 compile:
-	$(REBAR) compile
-
-deps:
-	./rebar get-deps
+	$(REBAR3) compile
 
 clean:
-	$(REBAR) clean
+	$(REBAR3) clean
 
 test:
-	$(REBAR) eunit
+	$(REBAR3) eunit
 
 doc:
-	$(REBAR) doc
+	$(REBAR3) doc
 
