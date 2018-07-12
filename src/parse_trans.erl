@@ -98,10 +98,10 @@
             throw({error,get_pos(I),{R, Trace}})
         end).
 
--ifdef(use_get_stacktrace).
--define(WITH_STACKTRACE(T,R,S), T:R -> S = erlang:get_stacktrace(),).
+-ifdef(OTP_RELEASE).
+-define(WITH_STACKTRACE(T, R, S), T:R:S ->).
 -else.
--define(WITH_STACKTRACE(T,R,S), T:R:S ->).
+-define(WITH_STACKTRACE(T, R, S), T:R -> S = erlang:get_stacktrace(),).
 -endif.
 
 -export_type([forms/0]).
