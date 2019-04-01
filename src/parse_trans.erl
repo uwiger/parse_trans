@@ -411,7 +411,8 @@ do_insert_forms(below, Insert, Forms, _Context) when is_list(Insert) ->
 insert_below([F|Rest], Insert) ->
     case type(F) of
         eof_marker ->
-            Insert ++ [F];
+            %% In the unlikely case someone misused eof_marker
+            Insert ++ [F | Rest];
         _ ->
             [F|insert_below(Rest, Insert)]
     end.
