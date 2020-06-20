@@ -734,14 +734,14 @@ format_exception(Class, Reason) ->
 %%% Note that a stacktrace is generated inside this function.
 %%% @end
 format_exception(Class, Reason, Lines) ->
-    ST = erlang:process_info(self(), current_stacktrace),
+    {current_stacktrace, ST} = erlang:process_info(self(), current_stacktrace),
     PrintF = fun(Term, I) ->
                      io_lib_pretty:print(
                        Term, I, columns(), ?LINEMAX, ?CHAR_MAX,
                        record_print_fun())
              end,
     StackF = fun(_, _, _) -> false end,
-    lines(Lines, lib:format_exception(
+    lines(Lines, erl_error:format_exception(
                    1, Class, Reason, ST, StackF, PrintF)).
 
 columns() ->
