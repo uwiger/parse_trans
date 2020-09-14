@@ -242,7 +242,7 @@ get_module(Forms) ->
 %%% A = atom()
 %%%
 %%% @doc
-%%% Returns the value of the first occurence of attribute A.
+%%% Returns the value of the first occurrence of attribute A.
 %%% @end
 %%%
 -spec get_attribute(atom(), [any()]) ->
