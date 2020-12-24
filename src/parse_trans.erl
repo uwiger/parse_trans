@@ -30,6 +30,8 @@
 
 -module(parse_trans).
 
+-compile({no_auto_import,[error/3]}).
+
 -export([plain_transform/2]).
 
 -export([
