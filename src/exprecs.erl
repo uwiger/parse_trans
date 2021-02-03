@@ -776,7 +776,8 @@ generate_f(attribute, {attribute,L,export_records,_} = Form, _Ctxt,
      false, Acc#pass1{inserted = true}};
 generate_f(function, Form, _Context, #pass1{generated = false} = Acc) ->
     % Layout record funs before first function
-    L = erl_syntax:get_pos(Form),
+    Anno = erl_syntax:get_pos(Form),
+    L = erl_anno:location(Anno),
     Forms = generate_specs_and_accessors(L, Acc),
     {Forms, Form, [], false, Acc#pass1{generated = true}};
 generate_f(_Type, Form, _Ctxt, Acc) ->
