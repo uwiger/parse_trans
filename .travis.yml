@@ -1,8 +1,8 @@
 language: erlang
 otp_release:
-- 23.2.3
-- 22.3.4.15
-- 21.3.8.20
+- 23.2
+- 22.3.4
+- 21.3.8
 script:
 - rebar3 eunit
 notifications:
