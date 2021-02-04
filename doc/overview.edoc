@@ -1,0 +1,25 @@
+@author Ulf Wiger <ulf@wiger.net>
+
+@doc Parse_transform utilities
+
+[![Build Status](https://travis-ci.org/uwiger/parse_trans.svg)
+[![Hex pm](http://img.shields.io/hexpm/v/parse_trans.svg?style=flat)](https://hex.pm/packages/parse_trans)
+
+<h2>Introduction</h2>
+
+Parse_trans was written in order to capture some useful patterns in parse transformation
+and code generation for Erlang.
+
+Most notably, perhaps, the module {@link exprecs} generates standardized accessor
+functions for records, and `ct_expand' makes it possible to evaluate an
+expression at compile-time and substitute the result as a compile-time constant.
+
+Less known modules, perhaps:
+* `parse_trans_pp' can be called with escript to pretty-print source from
+  debug-compiled .beam files.
+* `parse_trans_codegen' provides pseudo-functions that can be used for
+  simple code generation.
+* `parse_trans' provides various helper functions for traversing code and
+  managing complex parse transforms
+
+@end

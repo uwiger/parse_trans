@@ -83,6 +83,10 @@
                      type/1
                     ]).
 
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -record(context, {module,
                   function,
                   arity,
@@ -99,12 +103,6 @@
             rpt_error(R, F, I, Trace),
             throw({error,get_pos(I),{R, Trace}})
         end).
-
--ifdef(OTP_RELEASE).
--define(WITH_STACKTRACE(T, R, S), T:R:S ->).
--else.
--define(WITH_STACKTRACE(T, R, S), T:R -> S = erlang:get_stacktrace(),).
--endif.
 
 -export_type([forms/0]).
 
@@ -328,7 +326,7 @@ do(Transform, Fun, Acc, Forms, Options) ->
             optionally_pretty_print(NewForms1, Options, Context),
             {NewForms1, Acc1}
     catch
-        ?WITH_STACKTRACE(error, Reason, ST)
+        error:Reason:ST ->
             {error,
              [{File, [{?DUMMY_LINE, ?MODULE,
                        {Reason, ST}}]}]};
@@ -348,7 +346,7 @@ top(F, Forms, Options) ->
             optionally_pretty_print(NewForms1, Options, Context),
             NewForms1
     catch
-        ?WITH_STACKTRACE(error, Reason, ST)
+        error:Reason:ST ->
             {error,
              [{File, [{?DUMMY_LINE, ?MODULE,
                        {Reason, ST}}]}]};
@@ -736,14 +734,14 @@ format_exception(Class, Reason) ->
 %%% Note that a stacktrace is generated inside this function.
 %%% @end
 format_exception(Class, Reason, Lines) ->
-    ST = erlang:process_info(self(), current_stacktrace),
+    {current_stacktrace, ST} = erlang:process_info(self(), current_stacktrace),
     PrintF = fun(Term, I) ->
                      io_lib_pretty:print(
                        Term, I, columns(), ?LINEMAX, ?CHAR_MAX,
                        record_print_fun())
              end,
     StackF = fun(_, _, _) -> false end,
-    lines(Lines, lib:format_exception(
+    lines(Lines, erl_error:format_exception(
                    1, Class, Reason, ST, StackF, PrintF)).
 
 columns() ->
@@ -874,7 +872,7 @@ this_form_df(F, Form, Context, Acc) ->
 apply_F(F, Type, Form, Context, Acc) ->
     try F(Type, Form, Context, Acc)
     catch
-        ?WITH_STACKTRACE(error, Reason, ST)
+        error:Reason:ST ->
             ?ERROR(Reason,
                    ?HERE,
                    [{type, Type},
@@ -945,3 +943,13 @@ format_error(Error) ->
 
 format_error_(Error) ->
     lists:flatten(io_lib:fwrite("~p", [Error])).
+
+
+%% EUnit
+-ifdef(TEST).
+
+format_exeption_test() ->
+    [_,_,_] = format_exception(error, {error, foo}, 3),
+    ok.
+
+-endif.
