@@ -206,13 +206,14 @@ plain_transform1(_, F) ->
 %% @end
 %%
 -spec get_pos(list()) ->
-    integer().
+    erl_anno:location().
 get_pos(I) when is_list(I) ->
     case proplists:get_value(form, I) of
         undefined ->
             ?DUMMY_LINE;
         Form ->
-            erl_syntax:get_pos(Form)
+            Anno = erl_syntax:get_pos(Form),
+            erl_anno:location(Anno)
     end.
 
 
@@ -461,7 +462,8 @@ renumber_(T, Prev) when is_tuple(T) ->
     case is_form(T) of
         true ->
             New = Prev+1,
-            T1 = setelement(2, T, New),
+            NewE2 = update_line(element(2, T), New),
+            T1 = setelement(2, T, NewE2),
             {Res, NewAcc} = renumber_(tuple_to_list(T1), New),
             {list_to_tuple(Res), NewAcc};
         false ->
@@ -479,6 +481,16 @@ is_form(T) ->
     catch
         error:_ ->
             false
+    end.
+
+update_line(Element2, Line) ->
+    case erl_anno:is_anno(Element2) of
+        true ->
+            erl_anno:set_line(Line, Element2);
+        false -> % location
+            A = erl_anno:new(Element2),
+            NewA = erl_anno:set_line(Line, A),
+            erl_anno:location(NewA)
     end.
 
 option_value(Key, Options, Result) ->
