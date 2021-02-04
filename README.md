@@ -16,15 +16,15 @@ Parse_trans was written in order to capture some useful patterns in parse transf
 and code generation for Erlang.
 
 Most notably, perhaps, the module [`exprecs`](http://github.com/uwiger/parse_trans/blob/master/doc/exprecs.md) generates standardized accessor
-functions for records, and `ct_expand` makes it possible to evaluate an
+functions for records, and [`ct_expand`](http://github.com/uwiger/parse_trans/blob/master/doc/ct_expand.md) makes it possible to evaluate an
 expression at compile-time and substitute the result as a compile-time constant.
 
 Less known modules, perhaps:
-* `parse_trans_pp` can be called with escript to pretty-print source from
+* [`parse_trans_pp`](http://github.com/uwiger/parse_trans/blob/master/doc/parse_trans_pp.md) can be called with escript to pretty-print source from
   debug-compiled .beam files.
-* `parse_trans_codegen` provides pseudo-functions that can be used for
+* [`parse_trans_codegen`](http://github.com/uwiger/parse_trans/blob/master/doc/parse_trans_codegen.md) provides pseudo-functions that can be used for
   simple code generation.
-* `parse_trans` provides various helper functions for traversing code and
+* [`parse_trans`](http://github.com/uwiger/parse_trans/blob/master/doc/parse_trans.md) provides various helper functions for traversing code and
   managing complex parse transforms
 
 
