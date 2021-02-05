@@ -1,6 +1,6 @@
 language: erlang
 otp_release:
-- 23.1
+- 23.1.2
 - 22.3.4
 - 21.3.8
 script:
