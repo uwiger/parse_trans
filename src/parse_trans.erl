@@ -891,7 +891,8 @@ apply_F(F, Type, Form, Context, Acc) ->
                     {context, Context},
                     {acc, Acc},
                     {apply_f, F},
-                    {form, Form}] ++ [{stack, ST}],
+                    {form, Form},
+                    {stack, ST}],
                    ST)
     end.
 
