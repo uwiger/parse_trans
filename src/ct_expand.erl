@@ -71,7 +71,7 @@ parse_transform(Forms, Options) ->
 ct_trace_opt(Options, Forms) ->
     case proplists:get_value(ct_expand_trace, Options) of
         undefined ->
-            case [Opt || {attribute,_,ct_expand_trace,Opt} <- Forms] of
+            case [Opt || {attribute,_,compile,{ct_expand_trace,Opt}} <- Forms] of
                 [] ->
                     [];
                 [_|_] = L ->
@@ -153,9 +153,15 @@ pp_function(F, []) ->
     atom_to_list(F) ++ "()";
 pp_function(F, [A|As]) ->
     lists:flatten([atom_to_list(F), "(",
-                   [io_lib:fwrite("~w", [erl_parse:normalise(A)]) |
-                    [[",", io_lib:fwrite("~w", [erl_parse:normalise(A_)])] || A_ <- As]],
+                   [pp_term(A) |
+                    [[",", pp_term(A_)] || A_ <- As]],
                    ")"]).
+
+pp_term({'fun',_, {clauses,_}} = F) ->
+    %% erl_parse:normalise/1 doesn't handle this
+    io_lib:fwrite("~s", [erl_prettypr:format(F)]);
+pp_term(F) ->
+    io_lib:fwrite("~p", [erl_parse:normalise(F)]).
 
 ret_trace(false, _, _, _, _) -> ok;
 ret_trace(true, L, F, Args, Res) ->
@@ -231,7 +237,7 @@ abstract_list([], _A) ->
 
 abstract_map(Map, A) ->
     [{map_field_assoc,A,abstract(K, A),abstract(V, A)}
-     || {K,V} <- maps:to_list(Map)
+     || {K,V} <- lists:sort(maps:to_list(Map))
     ].
 
 abstract_byte(Byte, Line) when is_integer(Byte) ->
