@@ -376,23 +376,32 @@ abstract(ClauseForms) ->
 
 substitute({tuple,L0,
             [{atom,_,tuple},
-             {integer,_,L},
+             Loc,
              {cons,_,
-              {tuple,_,[{atom,_,atom},{integer,_,_},{atom,_,'$var'}]},
+              {tuple,_,[{atom,_,atom},_LocA,{atom,_,'$var'}]},
               {cons,_,
-               {tuple,_,[{atom,_,var},{integer,_,_},{atom,_,V}]},
-               {nil,_}}}]}) ->
+               {tuple,_,[{atom,_,var},_LocB,{atom,_,V}]},
+               {nil,_}}}]}) when element(1, Loc) == tuple; % Erlang 24+
+                                 element(1, Loc) == integer ->
+    AbstConcreteLoc =
+        case Loc of
+            {integer, _, L} ->
+                {integer, L0, L};
+            {tuple, _, [{integer, _, L}, {integer, _, C}]} ->
+                {tuple, L0, [{integer, L0, L}, {integer, L0, C}]}
+        end,
     {call, L0, {remote,L0,{atom,L0,erl_parse},
                 {atom,L0,abstract}},
-     [{var, L0, V}, {integer, L0, L}]};
-substitute({tuple,L0,
+     [{var, L0, V}, AbstConcreteLoc]};
+substitute({tuple,L0, % Erlang 24: {Line,Col}
             [{atom,_,tuple},
-             {integer,_,_},
+             Loc,
              {cons,_,
-              {tuple,_,[{atom,_,atom},{integer,_,_},{atom,_,'$form'}]},
+              {tuple,_,[{atom,_,atom},_LocA,{atom,_,'$form'}]},
               {cons,_,
-               {tuple,_,[{atom,_,var},{integer,_,_},{atom,_,F}]},
-               {nil,_}}}]}) ->
+               {tuple,_,[{atom,_,var},_LocB,{atom,_,F}]},
+               {nil,_}}}]}) when element(1, Loc) == tuple; % Erlang 24+
+                                 element(1, Loc) == integer ->
     {var, L0, F};
 substitute([]) ->
     [];
