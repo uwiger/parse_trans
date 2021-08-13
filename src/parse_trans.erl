@@ -509,7 +509,7 @@ option_value(Key, Options, Result) ->
 %%% @spec (Fun, Forms, Acc, Options) -> NewAcc
 %%% Fun = function()
 %%% @doc
-%%% Equvalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).
+%%% Equivalent to do_inspect(Fun,Acc,Forms,initial_context(Forms,Options)).
 %%% @end
 %%%
 -spec inspect(insp_f(), A, forms(), options()) ->
