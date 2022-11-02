@@ -6,8 +6,9 @@ __Authors:__ Ulf Wiger ([`ulf@wiger.net`](mailto:ulf@wiger.net)).
 
 Parse_transform utilities
 
-[![Build Status](https://github.com/uwiger/parse_trans/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/uwiger/parse_trans/actions/workflows/ci.yml)
+[![Build Status](https://github.com/uwiger/parse_trans/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/uwiger/parse_trans/actions/workflows/ci.yml)
 [![Hex pm](http://img.shields.io/hexpm/v/parse_trans.svg?style=flat)](https://hex.pm/packages/parse_trans)
+
 
 ## Introduction ##
 
@@ -37,3 +38,4 @@ Less known modules, perhaps:
 <tr><td><a href="http://github.com/uwiger/parse_trans/blob/master/doc/parse_trans_codegen.md" class="module">parse_trans_codegen</a></td></tr>
 <tr><td><a href="http://github.com/uwiger/parse_trans/blob/master/doc/parse_trans_mod.md" class="module">parse_trans_mod</a></td></tr>
 <tr><td><a href="http://github.com/uwiger/parse_trans/blob/master/doc/parse_trans_pp.md" class="module">parse_trans_pp</a></td></tr></table>
+
