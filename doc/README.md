@@ -6,7 +6,7 @@ __Authors:__ Ulf Wiger ([`ulf@wiger.net`](mailto:ulf@wiger.net)).
 
 Parse_transform utilities
 
-[![Build Status](https://travis-ci.org/uwiger/parse_trans.svg)
+[![Build Status](https://github.com/uwiger/parse_trans/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/uwiger/parse_trans/actions/workflows/ci.yml)
 [![Hex pm](http://img.shields.io/hexpm/v/parse_trans.svg?style=flat)](https://hex.pm/packages/parse_trans)
 
 
