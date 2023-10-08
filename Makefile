@@ -14,5 +14,5 @@ test:
 	$(REBAR3) eunit
 
 doc:
-	$(REBAR3) doc
+	$(REBAR3) edoc
 
