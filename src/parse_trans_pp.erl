@@ -64,7 +64,7 @@ pp_src(Forms0, F) ->
     Str = [io_lib:fwrite("~s~n",
                          [lists:flatten([erl_pp:form(Fm) ||
                                             Fm <- Forms])])],
-    file:write_file(F, list_to_binary(Str)).
+    file:write_file(F, unicode:characters_to_nfc_binary(Str)).
 
 %% @spec (Beam::filename()) -> string() | {error, Reason}
 %%
@@ -92,7 +92,7 @@ pp_beam(Beam) ->
 pp_beam(F, Out) ->
     case pp_beam_to_str(F) of
         {ok, Str} ->
-            file:write_file(Out, list_to_binary(Str));
+            file:write_file(Out, unicode:characters_to_nfc_binary(Str));
         Other ->
             Other
     end.
