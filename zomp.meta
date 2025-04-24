@@ -1,0 +1,17 @@
+{name,"parse_trans"}.
+{type,lib}.
+{modules,[]}.
+{prefix,none}.
+{author,"Ulf Wiger"}.
+{desc,"Parse transform utilities for Erlang"}.
+{package_id,{"uwiger","parse_trans",{3,4,3}}}.
+{deps,[]}.
+{key_name,none}.
+{a_email,"ulf@wiger.net"}.
+{c_email,"ulf@wiger.net"}.
+{copyright,"Ulf Wiger"}.
+{file_exts,[]}.
+{license,"Apache-2.0"}.
+{repo_url,"https://github.com/uwiger/parse_trans"}.
+{tags,[]}.
+{ws_url,[]}.

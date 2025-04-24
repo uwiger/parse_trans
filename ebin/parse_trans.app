@@ -1,0 +1,11 @@
+{application,parse_trans,
+             [{description,"Parse transform utilities for Erlang"},
+              {registered,[]},
+              {included_applications,[]},
+              {applications,[stdlib,kernel,syntax_tools]},
+              {vsn,"3.4.3"},
+              {modules,[ct_expand_test,ex1,ex_codegen,ex_gen_module,
+                        ex_gproc_send_xform,ex_pmod,exprecs_eunit,lc,pmod,t,
+                        t_ex,test,test_exprecs,test_exprecs_vsns,test_pt,
+                        test_transform_mod,ct_expand,exprecs,parse_trans,
+                        parse_trans_codegen,parse_trans_mod,parse_trans_pp]}]}.
